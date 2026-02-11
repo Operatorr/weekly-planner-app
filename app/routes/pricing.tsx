@@ -36,14 +36,15 @@ function PricingPage() {
 
           {/* Billing toggle */}
           <div className="animate-fade-up delay-2 flex items-center justify-center gap-3 mb-12">
-            <span
+            <button
+              type="button"
               className={`text-sm transition-colors cursor-pointer ${
                 !yearly ? "text-ink font-medium" : "text-ink-muted"
               }`}
               onClick={() => setYearly(false)}
             >
               Monthly
-            </span>
+            </button>
             <button
               onClick={() => setYearly(!yearly)}
               className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
@@ -57,14 +58,15 @@ function PricingPage() {
                 }`}
               />
             </button>
-            <span
+            <button
+              type="button"
               className={`text-sm transition-colors cursor-pointer ${
                 yearly ? "text-ink font-medium" : "text-ink-muted"
               }`}
               onClick={() => setYearly(true)}
             >
               Yearly
-            </span>
+            </button>
             {yearly && (
               <Badge variant="sage" className="ml-1 animate-scale-in">
                 Save 25%
@@ -77,7 +79,7 @@ function PricingPage() {
             {/* Free tier */}
             <Card className="animate-fade-up delay-2 p-8 flex flex-col">
               <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-1">Free</h3>
+                <h2 className="text-xl font-semibold mb-1">Free</h2>
                 <p className="text-sm text-ink-muted">
                   Everything you need to get started
                 </p>
@@ -119,7 +121,7 @@ function PricingPage() {
 
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-semibold">Pro</h3>
+                  <h2 className="text-xl font-semibold">Pro</h2>
                   <Sparkles size={16} className="text-ember" />
                 </div>
                 <p className="text-sm text-ink-muted">
@@ -173,12 +175,12 @@ function PricingPage() {
 
           {/* Feature comparison table */}
           <div className="max-w-[840px] mx-auto">
-            <h3 className="font-display text-2xl font-bold text-center mb-8">
+            <h2 className="font-display text-2xl font-bold text-center mb-8">
               Feature comparison
-            </h3>
+            </h2>
 
             <div className="rounded-[16px] border border-border-subtle overflow-hidden">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm [font-variant-numeric:tabular-nums]">
                 <thead>
                   <tr className="bg-surface-sunken border-b border-border-subtle">
                     <th className="text-left px-6 py-4 font-medium text-ink-muted">
@@ -261,9 +263,9 @@ function PricingPage() {
 
           {/* FAQ */}
           <div className="max-w-[600px] mx-auto mt-20">
-            <h3 className="font-display text-2xl font-bold text-center mb-10">
+            <h2 className="font-display text-2xl font-bold text-center mb-10">
               Questions?
-            </h3>
+            </h2>
 
             <div className="space-y-6">
               <FaqItem

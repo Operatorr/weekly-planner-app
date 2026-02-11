@@ -43,7 +43,7 @@ export function ProjectTabs() {
         ))}
 
         {/* Add project button */}
-        <button className="px-3 py-3 text-clay hover:text-ink-muted transition-colors">
+        <button aria-label="Add project" className="px-3 py-3 text-clay hover:text-ink-muted transition-colors">
           <Plus size={16} />
         </button>
       </div>

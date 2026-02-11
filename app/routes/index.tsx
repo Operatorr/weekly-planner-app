@@ -127,7 +127,7 @@ function LandingPage() {
                     {/* Add task bar */}
                     <div className="flex items-center gap-3 px-4 py-3 rounded-[12px] border border-dashed border-clay-light text-clay">
                       <div className="w-5 h-5 rounded-full border-2 border-clay-light" />
-                      <span className="text-sm">Add a task...</span>
+                      <span className="text-sm">Add a task&#8230;</span>
                     </div>
 
                     {/* Task items */}
@@ -382,7 +382,7 @@ function FeatureCard({
   };
 
   return (
-    <div className={`group p-8 rounded-[20px] bg-surface-raised border border-border-subtle hover:border-border-strong hover:shadow-md transition-all duration-300`}>
+    <div className={`group p-8 rounded-[20px] bg-surface-raised border border-border-subtle hover:border-border-strong hover:shadow-md transition-[border-color,box-shadow] duration-300`}>
       <div
         className={`w-12 h-12 rounded-[12px] ${colorMap[color]} flex items-center justify-center mb-5 transition-transform duration-200 group-hover:scale-110`}
       >

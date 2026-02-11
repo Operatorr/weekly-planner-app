@@ -27,10 +27,10 @@ export function WeeklyView({ tasks, onToggleTask }: WeeklyViewProps) {
           <span className="text-xs text-clay">{weekRange}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
+          <button aria-label="Previous week" className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
             <ChevronLeft size={14} />
           </button>
-          <button className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
+          <button aria-label="Next week" className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
             <ChevronRight size={14} />
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AddTask } from "@/components/app/add-task";
 import { TaskList } from "@/components/app/task-list";
 import { WeeklyView } from "@/components/app/weekly-view";
@@ -20,6 +20,19 @@ export const Route = createFileRoute("/app/")({
 
 function TaskManagement() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [greeting, setGreeting] = useState("");
+  const [dateString, setDateString] = useState("");
+
+  useEffect(() => {
+    setGreeting(getGreeting());
+    setDateString(
+      new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })
+    );
+  }, []);
 
   const handleToggleTask = useCallback((id: string) => {
     setTasks((prev) =>
@@ -83,14 +96,10 @@ function TaskManagement() {
       {/* Welcome heading */}
       <div className="px-1">
         <h1 className="font-display text-2xl font-bold tracking-tight text-ink">
-          {getGreeting()}
+          {greeting}
         </h1>
         <p className="text-sm text-ink-muted mt-1">
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
+          {dateString}
         </p>
       </div>
 

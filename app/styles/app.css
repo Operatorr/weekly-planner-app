@@ -298,7 +298,7 @@ body {
 
 /* ─── Custom Checkbox Animation ─── */
 .task-checkbox {
-  transition: all 0.2s var(--ease-out-expo);
+  transition: border-color 0.2s var(--ease-out-expo), transform 0.2s var(--ease-out-expo), background-color 0.2s var(--ease-out-expo);
 }
 
 .task-checkbox:hover {
@@ -331,4 +331,19 @@ body {
   outline: 2px solid var(--color-ember);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Touch ─── */
+button, a, [role="button"], input, textarea, select {
+  touch-action: manipulation;
 }

@@ -51,12 +51,13 @@ export function TaskItem({
     : undefined;
 
   return (
-    <div
+    <button
+      type="button"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(task)}
       className={cn(
-        "group flex items-start gap-3 px-4 py-2.5 rounded-[12px] transition-all duration-200 cursor-pointer select-none",
+        "group flex items-start gap-3 px-4 py-2.5 rounded-[12px] transition-colors duration-200 cursor-pointer select-none w-full text-left",
         completing && "opacity-50 scale-[0.98]",
         task.completed
           ? "opacity-40"
@@ -77,7 +78,7 @@ export function TaskItem({
       <button
         onClick={handleCheck}
         className={cn(
-          "relative w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200",
+          "relative w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-[border-color,background-color,transform] duration-200",
           task.completed || completing
             ? "border-sage bg-sage scale-100"
             : "border-clay-light hover:border-ember hover:scale-110"
@@ -155,12 +156,13 @@ export function TaskItem({
         )}
       >
         <button
+          aria-label="Task options"
           className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal size={14} />
         </button>
       </div>
-    </div>
+    </button>
   );
 }

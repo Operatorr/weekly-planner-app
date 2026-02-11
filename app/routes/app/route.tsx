@@ -37,7 +37,7 @@ function AppLayout() {
           <AppSidebar />
           <main
             className={cn(
-              "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+              "flex-1 flex flex-col overflow-hidden transition-[margin] duration-300",
               sidebarOpen ? "md:ml-[240px]" : "md:ml-[64px]"
             )}
           >

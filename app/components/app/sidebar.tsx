@@ -192,7 +192,7 @@ function SidebarItem({
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-2.5 rounded-[8px] transition-all duration-150",
+        "w-full flex items-center gap-2.5 rounded-[8px] transition-[color,background-color,font-weight] duration-150",
         collapsed ? "px-0 py-2.5 justify-center" : "px-2.5 py-2",
         active
           ? "bg-ember/8 text-ember font-medium"

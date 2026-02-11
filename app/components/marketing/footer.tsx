@@ -1,7 +1,11 @@
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Separator } from "@/components/ui/separator";
 
 export function Footer() {
+  const [year, setYear] = useState<number | null>(null);
+  useEffect(() => { setYear(new Date().getFullYear()); }, []);
+
   return (
     <footer className="bg-surface-sunken border-t border-border-subtle">
       <div className="max-w-[1200px] mx-auto px-6 py-16">
@@ -90,7 +94,7 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-clay">
-            &copy; {new Date().getFullYear()} Marrow Tasker. All rights
+            &copy; {year ?? ""} Marrow Tasker. All rights
             reserved.
           </p>
           <div className="flex items-center gap-5">

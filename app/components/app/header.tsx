@@ -85,7 +85,10 @@ export function AppHeader() {
         </Tooltip>
 
         {/* Profile avatar */}
-        <button className="w-8 h-8 rounded-full bg-bone border border-border flex items-center justify-center text-ink-muted hover:text-ink hover:border-border-strong transition-colors">
+        <button
+          aria-label="User profile"
+          className="w-8 h-8 rounded-full bg-bone border border-border flex items-center justify-center text-ink-muted hover:text-ink hover:border-border-strong transition-colors"
+        >
           <User size={15} />
         </button>
       </header>

@@ -48,7 +48,7 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
           <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center transition-transform group-hover:scale-110">
             <Plus size={14} strokeWidth={2.5} />
           </div>
-          <span className="text-sm">Add a task...</span>
+          <span className="text-sm">Add a task&#8230;</span>
           <kbd className="ml-auto hidden sm:inline text-[10px] text-clay bg-bone rounded px-1.5 py-0.5 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
             N
           </kbd>
@@ -64,7 +64,10 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
               onChange={(e) => setName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Task name"
-              className="w-full text-[0.9375rem] font-medium text-ink placeholder:text-clay bg-transparent outline-none"
+              aria-label="Task name"
+              name="task-name"
+              autoComplete="off"
+              className="w-full text-[0.9375rem] font-medium text-ink placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md"
             />
 
             {/* Description */}
@@ -72,8 +75,10 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (optional)"
+              aria-label="Task description"
+              name="task-description"
               rows={2}
-              className="w-full text-sm text-ink-light placeholder:text-clay bg-transparent outline-none resize-none leading-relaxed"
+              className="w-full text-sm text-ink-light placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md resize-none leading-relaxed"
             />
 
             {/* Option buttons */}
