@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+dist/
+
+# Build artifacts
+*.timestamp_*.js
+.vinxi/
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Cache
+pnpm-lock.yaml
