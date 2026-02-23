@@ -51,11 +51,13 @@ export function TaskItem({
     : undefined;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(task)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(task); } }}
       className={cn(
         "group flex items-start gap-3 px-4 py-2.5 rounded-[12px] transition-colors duration-200 cursor-pointer select-none w-full text-left",
         completing && "opacity-50 scale-[0.98]",
@@ -163,6 +165,6 @@ export function TaskItem({
           <MoreHorizontal size={14} />
         </button>
       </div>
-    </button>
+    </div>
   );
 }
