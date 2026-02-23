@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Task } from "@/lib/mock-data";
-import { formatDateLong } from "@/lib/mock-data";
+import type { Task } from "@/lib/types";
+import { useTaskContext } from "@/lib/task-context";
+import { DatePicker } from "@/components/app/date-picker";
+import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
+import { ProjectSelector } from "@/components/app/project-selector";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   X,
-  CalendarDays,
-  Bell,
-  FolderOpen,
   Trash2,
   Plus,
   Check,
@@ -20,11 +20,72 @@ interface TaskDetailProps {
 }
 
 export function TaskDetail({ task, onClose }: TaskDetailProps) {
-  const [name, setName] = useState(task.name);
+  const {
+    updateTask,
+    deleteTask,
+    getChecklist,
+    addChecklistItem,
+    toggleChecklistItem,
+    deleteChecklistItem,
+  } = useTaskContext();
+
+  const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
-  const [checklist, setChecklist] = useState(task.checklist || []);
+  const [dueDate, setDueDate] = useState<string | null>(task.due_date);
+  const [projectId, setProjectId] = useState(task.project_id);
+  const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [showChecklistInput, setShowChecklistInput] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checklistInputRef = useRef<HTMLInputElement>(null);
+
+  const checklist = getChecklist(task.id);
+  const completedCount = checklist.filter((c) => c.is_completed).length;
+
+  // Auto-save with debounce (500ms)
+  const autoSave = useCallback(
+    (updates: Partial<Task>) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        updateTask(task.id, updates);
+      }, 500);
+    },
+    [task.id, updateTask]
+  );
+
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    autoSave({ title: newTitle });
+  };
+
+  const handleDescriptionChange = (newDesc: string) => {
+    setDescription(newDesc);
+    autoSave({ description: newDesc });
+  };
+
+  const handleDateChange = (date: string | null) => {
+    setDueDate(date);
+    updateTask(task.id, { due_date: date });
+  };
+
+  const handleProjectChange = (pid: string) => {
+    setProjectId(pid);
+    updateTask(task.id, { project_id: pid });
+  };
+
+  const handleDelete = () => {
+    deleteTask(task.id);
+    onClose();
+  };
+
+  const handleAddChecklistItem = () => {
+    if (!newChecklistItem.trim()) return;
+    addChecklistItem(task.id, newChecklistItem.trim());
+    setNewChecklistItem("");
+    checklistInputRef.current?.focus();
+  };
 
   // Focus trap and Escape key
   useEffect(() => {
@@ -50,23 +111,15 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
       }
     };
     document.addEventListener("keydown", handleKeyDown);
-    // Focus first focusable element
-    const firstFocusable = sheetRef.current?.querySelector<HTMLElement>(
-      'button, [href], input, textarea'
-    );
-    firstFocusable?.focus();
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const toggleChecklistItem = (id: string) => {
-    setChecklist((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
-    );
-  };
-
-  const completedCount = checklist.filter((c) => c.completed).length;
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   return (
     <>
@@ -101,8 +154,8 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Task name */}
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
             aria-label="Task name"
             name="task-name"
             autoComplete="off"
@@ -113,7 +166,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           {/* Description */}
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
             placeholder="Add a description\u2026"
             aria-label="Task description"
             name="task-description"
@@ -123,26 +176,9 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
           {/* Meta fields */}
           <div className="space-y-2">
-            <MetaField
-              icon={<CalendarDays size={15} />}
-              label="Date"
-              value={task.dueDate ? formatDateLong(task.dueDate) : "No date"}
-            />
-            <MetaField
-              icon={<Bell size={15} />}
-              label="Reminder"
-              value={
-                task.reminderType === "email"
-                  ? `Email at ${task.reminderTime || "9:00 AM"}`
-                  : "None"
-              }
-            />
-            <MetaField
-              icon={<FolderOpen size={15} />}
-              label="Project"
-              value="Personal"
-              valueColor="#D4644A"
-            />
+            <DatePicker value={dueDate} onChange={handleDateChange} />
+            <ReminderSelector value={reminder} onChange={setReminder} />
+            <ProjectSelector value={projectId} onChange={handleProjectChange} />
           </div>
 
           {/* Checklist */}
@@ -156,7 +192,13 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
                   </span>
                 )}
               </div>
-              <button className="text-xs text-ember hover:text-ember-dark transition-colors flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setShowChecklistInput(true);
+                  setTimeout(() => checklistInputRef.current?.focus(), 50);
+                }}
+                className="text-xs text-ember hover:text-ember-dark transition-colors flex items-center gap-1"
+              >
                 <Plus size={12} />
                 Add item
               </button>
@@ -186,33 +228,71 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
                     className="text-clay opacity-0 group-hover:opacity-30 transition-opacity"
                   />
                   <button
-                    onClick={() => toggleChecklistItem(item.id)}
+                    onClick={() => toggleChecklistItem(task.id, item.id)}
                     className={cn(
                       "w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center flex-shrink-0 transition-colors duration-200",
-                      item.completed
+                      item.is_completed
                         ? "border-sage bg-sage"
                         : "border-clay-light hover:border-ember"
                     )}
                   >
-                    {item.completed && (
+                    {item.is_completed && (
                       <Check size={10} className="text-white" strokeWidth={3} />
                     )}
                   </button>
                   <span
                     className={cn(
-                      "text-sm",
-                      item.completed
+                      "text-sm flex-1",
+                      item.is_completed
                         ? "line-through text-ink-muted"
                         : "text-ink-light"
                     )}
                   >
-                    {item.text}
+                    {item.title}
                   </span>
+                  <button
+                    onClick={() => deleteChecklistItem(task.id, item.id)}
+                    className="w-5 h-5 rounded flex items-center justify-center text-clay opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-red-500 transition-all"
+                    aria-label="Delete checklist item"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               ))}
             </div>
 
-            {checklist.length === 0 && (
+            {/* Add checklist input */}
+            {showChecklistInput && (
+              <div className="flex items-center gap-2.5 px-2 py-1.5 mt-1">
+                <div className="w-3" />
+                <div className="w-[18px] h-[18px] rounded-[5px] border-2 border-clay-light/50 flex-shrink-0" />
+                <input
+                  ref={checklistInputRef}
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleAddChecklistItem();
+                    }
+                    if (e.key === "Escape") {
+                      setShowChecklistInput(false);
+                      setNewChecklistItem("");
+                    }
+                  }}
+                  placeholder="Add an item..."
+                  className="flex-1 text-sm text-ink-light bg-transparent outline-none placeholder:text-clay"
+                />
+                <button
+                  onClick={handleAddChecklistItem}
+                  disabled={!newChecklistItem.trim()}
+                  className="text-xs text-ember hover:text-ember-dark disabled:opacity-40 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            )}
+
+            {checklist.length === 0 && !showChecklistInput && (
               <p className="text-sm text-clay italic">
                 No checklist items yet
               </p>
@@ -229,10 +309,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
                 variant="destructive"
                 size="sm"
                 className="gap-1.5"
-                onClick={() => {
-                  // TODO: wire up actual delete
-                  onClose();
-                }}
+                onClick={handleDelete}
               >
                 Confirm
               </Button>
@@ -257,35 +334,16 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           )}
 
           <span className="text-xs text-clay">
-            Created {task.createdAt ? new Date(task.createdAt + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "recently"}
+            Created{" "}
+            {task.created_at
+              ? new Date(task.created_at + "T12:00:00").toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              : "recently"}
           </span>
         </div>
       </div>
     </>
-  );
-}
-
-function MetaField({
-  icon,
-  label,
-  value,
-  valueColor,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  valueColor?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-bone/40 hover:bg-bone/60 transition-colors">
-      <span className="text-clay">{icon}</span>
-      <span className="text-xs text-clay w-16">{label}</span>
-      <span
-        className="text-sm text-ink-light"
-        style={valueColor ? { color: valueColor } : undefined}
-      >
-        {value}
-      </span>
-    </div>
   );
 }

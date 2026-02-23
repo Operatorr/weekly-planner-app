@@ -1,13 +1,15 @@
 import { useAppContext } from "@/lib/app-context";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { mockProjects } from "@/lib/mock-data";
+import { useProjects } from "@/hooks/use-projects";
 import {
   Sun,
   Calendar,
@@ -17,6 +19,7 @@ import {
   Settings,
   Plus,
   Filter,
+  SlidersHorizontal,
 } from "lucide-react";
 
 interface NavItem {
@@ -38,11 +41,182 @@ const bottomNavItems: NavItem[] = [
   { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
+function SidebarContent({ collapsed }: { collapsed: boolean }) {
+  const { activeView, setActiveView, savedFilters, setFilterPanelOpen } = useAppContext();
+  const { data: projects = [] } = useProjects();
+  const navigate = useNavigate();
+
+  return (
+    <nav className="flex-1 flex flex-col py-3 overflow-y-auto">
+      {/* Top nav items */}
+      <div className="px-2.5 space-y-0.5">
+        {topNavItems.map((item) => (
+          <SidebarItem
+            key={item.id}
+            item={item}
+            active={activeView === item.id}
+            collapsed={collapsed}
+            onClick={() => setActiveView(item.id)}
+          />
+        ))}
+      </div>
+
+      <div className="px-4 my-3">
+        <Separator />
+      </div>
+
+      {/* Projects */}
+      <div className="px-2.5">
+        <div
+          className={cn(
+            "flex items-center justify-between mb-1",
+            !collapsed ? "px-2.5" : "px-0 justify-center"
+          )}
+        >
+          {!collapsed && (
+            <span className="text-[10px] font-semibold tracking-wider uppercase text-clay">
+              Projects
+            </span>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="w-5 h-5 rounded-[4px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
+                <Plus size={14} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">New project</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {projects.map((project) => (
+          <button
+            key={project.id}
+            className={cn(
+              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors",
+              !collapsed
+                ? "px-2.5 py-2 hover:bg-bone/60"
+                : "px-0 py-2 justify-center hover:bg-bone/60"
+            )}
+          >
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: project.color }}
+            />
+            {!collapsed && (
+              <>
+                <span className="text-sm text-ink-light truncate sidebar-label">
+                  {project.name}
+                </span>
+                <span className="ml-auto text-xs text-clay sidebar-label">
+                  {project.taskCount}
+                </span>
+              </>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 my-3">
+        <Separator />
+      </div>
+
+      {/* Filters */}
+      <div className="px-2.5">
+        <div
+          className={cn(
+            "flex items-center justify-between mb-1",
+            !collapsed ? "px-2.5" : "px-0 justify-center"
+          )}
+        >
+          {!collapsed && (
+            <span className="text-[10px] font-semibold tracking-wider uppercase text-clay">
+              Filters
+            </span>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setFilterPanelOpen(true)}
+                className="w-5 h-5 rounded-[4px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
+              >
+                <SlidersHorizontal size={14} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Open filters</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {savedFilters.map((filter) => (
+          <button
+            key={filter.id}
+            className={cn(
+              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-ink-muted",
+              !collapsed
+                ? "px-2.5 py-2 hover:bg-bone/60"
+                : "px-0 py-2 justify-center hover:bg-bone/60"
+            )}
+          >
+            <Filter size={16} className="flex-shrink-0" />
+            {!collapsed && (
+              <span className="text-sm sidebar-label">{filter.name}</span>
+            )}
+          </button>
+        ))}
+
+        {savedFilters.length === 0 && (
+          <button
+            onClick={() => setFilterPanelOpen(true)}
+            className={cn(
+              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-clay hover:text-ink-muted",
+              !collapsed
+                ? "px-2.5 py-2 hover:bg-bone/60"
+                : "px-0 py-2 justify-center hover:bg-bone/60"
+            )}
+          >
+            <Plus size={16} className="flex-shrink-0" />
+            {!collapsed && (
+              <span className="text-sm sidebar-label">Add filter</span>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Bottom nav items */}
+      <div className="px-2.5 space-y-0.5 pb-2">
+        <div className="px-4 mb-2">
+          <Separator />
+        </div>
+        {bottomNavItems.map((item) => (
+          <SidebarItem
+            key={item.id}
+            item={item}
+            active={activeView === item.id}
+            collapsed={collapsed}
+            onClick={() => {
+              setActiveView(item.id);
+              if (item.id === "activity") {
+                navigate({ to: "/app/activity" });
+              } else {
+                navigate({ to: "/app" });
+              }
+            }}
+          />
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 export function AppSidebar() {
-  const { sidebarOpen, activeView, setActiveView } = useAppContext();
+  const { sidebarOpen, mobileSidebarOpen, setMobileSidebarOpen } =
+    useAppContext();
 
   return (
     <TooltipProvider delayDuration={300}>
+      {/* Desktop sidebar */}
       <aside
         className={cn(
           "fixed top-14 left-0 bottom-0 z-20 bg-surface-raised border-r border-border-subtle flex flex-col sidebar-transition overflow-hidden",
@@ -50,129 +224,15 @@ export function AppSidebar() {
           "hidden md:flex"
         )}
       >
-        <nav className="flex-1 flex flex-col py-3 overflow-y-auto">
-          {/* Top nav items */}
-          <div className="px-2.5 space-y-0.5">
-            {topNavItems.map((item) => (
-              <SidebarItem
-                key={item.id}
-                item={item}
-                active={activeView === item.id}
-                collapsed={!sidebarOpen}
-                onClick={() => setActiveView(item.id)}
-              />
-            ))}
-          </div>
-
-          <div className="px-4 my-3">
-            <Separator />
-          </div>
-
-          {/* Projects */}
-          <div className="px-2.5">
-            <div
-              className={cn(
-                "flex items-center justify-between mb-1",
-                sidebarOpen ? "px-2.5" : "px-0 justify-center"
-              )}
-            >
-              {sidebarOpen && (
-                <span className="text-[10px] font-semibold tracking-wider uppercase text-clay">
-                  Projects
-                </span>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="w-5 h-5 rounded-[4px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
-                    <Plus size={14} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">New project</TooltipContent>
-              </Tooltip>
-            </div>
-
-            {mockProjects.map((project) => (
-              <button
-                key={project.id}
-                className={cn(
-                  "w-full flex items-center gap-2.5 rounded-[8px] transition-colors",
-                  sidebarOpen
-                    ? "px-2.5 py-2 hover:bg-bone/60"
-                    : "px-0 py-2 justify-center hover:bg-bone/60"
-                )}
-              >
-                <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: project.color }}
-                />
-                {sidebarOpen && (
-                  <>
-                    <span className="text-sm text-ink-light truncate sidebar-label">
-                      {project.name}
-                    </span>
-                    <span className="ml-auto text-xs text-clay sidebar-label">
-                      {project.taskCount}
-                    </span>
-                  </>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <div className="px-4 my-3">
-            <Separator />
-          </div>
-
-          {/* Filters */}
-          <div className="px-2.5">
-            <div
-              className={cn(
-                "flex items-center justify-between mb-1",
-                sidebarOpen ? "px-2.5" : "px-0 justify-center"
-              )}
-            >
-              {sidebarOpen && (
-                <span className="text-[10px] font-semibold tracking-wider uppercase text-clay">
-                  Filters
-                </span>
-              )}
-            </div>
-
-            <button
-              className={cn(
-                "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-ink-muted",
-                sidebarOpen
-                  ? "px-2.5 py-2 hover:bg-bone/60"
-                  : "px-0 py-2 justify-center hover:bg-bone/60"
-              )}
-            >
-              <Filter size={16} className="flex-shrink-0" />
-              {sidebarOpen && (
-                <span className="text-sm sidebar-label">Due This Week</span>
-              )}
-            </button>
-          </div>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Bottom nav items */}
-          <div className="px-2.5 space-y-0.5 pb-2">
-            <div className="px-4 mb-2">
-              <Separator />
-            </div>
-            {bottomNavItems.map((item) => (
-              <SidebarItem
-                key={item.id}
-                item={item}
-                active={activeView === item.id}
-                collapsed={!sidebarOpen}
-                onClick={() => setActiveView(item.id)}
-              />
-            ))}
-          </div>
-        </nav>
+        <SidebarContent collapsed={!sidebarOpen} />
       </aside>
+
+      {/* Mobile sidebar drawer */}
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 pt-10">
+          <SidebarContent collapsed={false} />
+        </SheetContent>
+      </Sheet>
     </TooltipProvider>
   );
 }

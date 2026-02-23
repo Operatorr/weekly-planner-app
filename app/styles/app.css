@@ -266,6 +266,61 @@ body {
   50% { opacity: 0.4; }
 }
 
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 80px;
+  }
+}
+
+@keyframes taskFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  60% {
+    opacity: 0.5;
+    transform: translateX(0) scale(0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(16px) scale(0.95);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
 .animate-fade-up {
   animation: fadeUp 0.6s var(--ease-out-expo) both;
 }
@@ -284,6 +339,19 @@ body {
 
 .animate-slide-left {
   animation: slideInLeft 0.5s var(--ease-out-expo) both;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s var(--ease-out-expo) both;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.35s var(--ease-out-expo) both;
+}
+
+.animate-task-fade-out {
+  animation: taskFadeOut 0.5s var(--ease-out-expo) forwards;
+  overflow: hidden;
 }
 
 /* Staggered delays */

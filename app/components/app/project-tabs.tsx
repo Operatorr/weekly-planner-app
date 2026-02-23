@@ -1,15 +1,46 @@
+import { useState, useRef, useEffect } from "react";
 import { useAppContext } from "@/lib/app-context";
 import { cn } from "@/lib/utils";
-import { mockProjects } from "@/lib/mock-data";
-import { Plus } from "lucide-react";
+import { useProjects, useCreateProject } from "@/hooks/use-projects";
+import { Plus, Check, X } from "lucide-react";
 
 export function ProjectTabs() {
   const { activeProject, setActiveProject } = useAppContext();
+  const { data: projects = [] } = useProjects();
+  const createProject = useCreateProject();
+  const [isCreating, setIsCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isCreating && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isCreating]);
 
   const tabs = [
     { id: "all", name: "All" },
-    ...mockProjects.map((p) => ({ id: p.id, name: p.name, color: p.color })),
+    ...projects.map((p) => ({ id: p.id, name: p.name, color: p.color })),
   ];
+
+  const handleCreate = () => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    createProject.mutate(trimmed);
+    setNewName("");
+    setIsCreating(false);
+  };
+
+  const handleCreateKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCreate();
+    }
+    if (e.key === "Escape") {
+      setNewName("");
+      setIsCreating(false);
+    }
+  };
 
   return (
     <div className="border-b border-border-subtle bg-surface-raised shrink-0">
@@ -42,10 +73,48 @@ export function ProjectTabs() {
           </button>
         ))}
 
-        {/* Add project button */}
-        <button aria-label="Add project" className="px-3 py-3 text-clay hover:text-ink-muted transition-colors">
-          <Plus size={16} />
-        </button>
+        {/* Inline project creation */}
+        {isCreating ? (
+          <div className="flex items-center gap-1 px-2 py-1.5">
+            <input
+              ref={inputRef}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={handleCreateKeyDown}
+              onBlur={() => {
+                if (!newName.trim()) {
+                  setIsCreating(false);
+                }
+              }}
+              placeholder="Project name"
+              className="w-[140px] text-sm px-2 py-1 rounded-[6px] border border-border bg-surface outline-none focus:border-ember/50 focus:ring-1 focus:ring-ember/20 text-ink placeholder:text-clay"
+            />
+            <button
+              onClick={handleCreate}
+              disabled={!newName.trim()}
+              className="p-1 rounded-[4px] text-sage hover:bg-sage/10 disabled:opacity-30 transition-colors"
+            >
+              <Check size={14} />
+            </button>
+            <button
+              onClick={() => {
+                setNewName("");
+                setIsCreating(false);
+              }}
+              className="p-1 rounded-[4px] text-clay hover:text-ink-muted hover:bg-bone transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsCreating(true)}
+            aria-label="Add project"
+            className="px-3 py-3 text-clay hover:text-ink-muted transition-colors"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
     </div>
   );

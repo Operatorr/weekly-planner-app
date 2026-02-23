@@ -1,92 +1,143 @@
 import { useState } from "react";
-import type { Task } from "@/lib/mock-data";
-import { formatDate, isToday, isPast } from "@/lib/mock-data";
+import type { Task } from "@/lib/types";
+import { formatDate, isToday, isPast } from "@/lib/task-context";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   CalendarDays,
-  Bell,
   GripVertical,
   MoreHorizontal,
+  Pencil,
   Check,
+  Trash2,
 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TaskItemProps {
   task: Task;
   onToggle?: (id: string) => void;
   onClick?: (task: Task) => void;
+  onDelete?: (id: string) => void;
   showProject?: boolean;
   compact?: boolean;
+  checklistCount?: { done: number; total: number };
+  sortable?: boolean;
 }
 
 export function TaskItem({
   task,
   onToggle,
   onClick,
+  onDelete,
   showProject,
   compact,
+  checklistCount,
+  sortable = false,
 }: TaskItemProps) {
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    disabled: !sortable,
+  });
+
+  const style = sortable
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : undefined,
+        zIndex: isDragging ? 50 : undefined,
+      }
+    : undefined;
+
   const handleCheck = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (task.completed) return;
+    if (task.status === "completed") return;
     setCompleting(true);
     setTimeout(() => {
       onToggle?.(task.id);
+      setCompleting(false);
     }, 600);
   };
 
-  const dateBadgeVariant = task.dueDate
-    ? isPast(task.dueDate) && !isToday(task.dueDate)
+  const dateBadgeVariant = task.due_date
+    ? isPast(task.due_date) && !isToday(task.due_date)
       ? "destructive"
-      : isToday(task.dueDate)
+      : isToday(task.due_date)
         ? "sky"
         : "default"
     : undefined;
 
-  const checklistProgress = task.checklist
-    ? `${task.checklist.filter((c) => c.completed).length}/${task.checklist.length}`
+  const checklistProgress = checklistCount
+    ? `${checklistCount.done}/${checklistCount.total}`
     : undefined;
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       role="button"
       tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(task)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(task); } }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(task);
+        }
+      }}
       className={cn(
         "group flex items-start gap-3 px-4 py-2.5 rounded-[12px] transition-colors duration-200 cursor-pointer select-none w-full text-left",
         completing && "opacity-50 scale-[0.98]",
-        task.completed
+        isDragging && "shadow-lg bg-surface-raised",
+        task.status === "completed"
           ? "opacity-40"
           : "hover:bg-bone/50 active:scale-[0.995]"
       )}
     >
       {/* Drag handle (visible on hover) */}
-      <div
-        className={cn(
-          "pt-0.5 -ml-2 transition-opacity duration-150",
-          hovered && !task.completed ? "opacity-30" : "opacity-0"
-        )}
-      >
-        <GripVertical size={14} className="text-clay" />
-      </div>
+      {sortable && (
+        <div
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "pt-0.5 -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
+            hovered && task.status !== "completed" ? "opacity-30" : "opacity-0"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={14} className="text-clay" />
+        </div>
+      )}
 
       {/* Checkbox */}
       <button
         onClick={handleCheck}
         className={cn(
           "relative w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-[border-color,background-color,transform] duration-200",
-          task.completed || completing
+          task.status === "completed" || completing
             ? "border-sage bg-sage scale-100"
             : "border-clay-light hover:border-ember hover:scale-110"
         )}
       >
-        {(task.completed || completing) && (
+        {(task.status === "completed" || completing) && (
           <svg
             width="12"
             height="12"
@@ -117,26 +168,23 @@ export function TaskItem({
           <span
             className={cn(
               "text-sm leading-snug truncate",
-              task.completed || completing
+              task.status === "completed" || completing
                 ? "line-through text-ink-muted"
                 : "text-ink"
             )}
           >
-            {task.name}
+            {task.title}
           </span>
         </div>
 
         {/* Metadata row */}
         {!compact && (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {task.dueDate && dateBadgeVariant && (
+            {task.due_date && dateBadgeVariant && (
               <Badge variant={dateBadgeVariant} className="text-[10px] py-0 px-1.5">
                 <CalendarDays size={10} className="mr-1" />
-                {formatDate(task.dueDate)}
+                {formatDate(task.due_date)}
               </Badge>
-            )}
-            {task.reminderType && task.reminderType !== "none" && (
-              <Bell size={12} className="text-amber" />
             )}
             {checklistProgress && (
               <span className="text-[10px] text-clay">{checklistProgress}</span>
@@ -150,20 +198,55 @@ export function TaskItem({
         )}
       </div>
 
-      {/* Actions (visible on hover) */}
+      {/* Context menu / Actions */}
       <div
         className={cn(
           "flex items-center gap-0.5 transition-opacity duration-150",
-          hovered && !task.completed ? "opacity-100" : "opacity-0"
+          hovered && task.status !== "completed" ? "opacity-100" : "opacity-0"
         )}
       >
-        <button
-          aria-label="Task options"
-          className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MoreHorizontal size={14} />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="Task options"
+              className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal size={14} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick?.(task);
+              }}
+            >
+              <Pencil size={14} className="text-clay" />
+              <span>Edit</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle?.(task.id);
+              }}
+            >
+              <Check size={14} className="text-clay" />
+              <span>{task.status === "completed" ? "Uncomplete" : "Complete"}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(task.id);
+              }}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 size={14} />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

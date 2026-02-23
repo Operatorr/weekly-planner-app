@@ -10,6 +10,18 @@ import { Check, X, ArrowRight, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
+  head: () => ({
+    meta: [
+      { title: "Pricing — Marrow Tasker" },
+      { name: "description", content: "Simple, transparent pricing for Marrow Tasker. Start free, upgrade when you need more. No surprises, no hidden fees." },
+      { property: "og:title", content: "Pricing — Marrow Tasker" },
+      { property: "og:description", content: "Start free, upgrade when you need more. Simple, transparent pricing with no hidden fees." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Pricing — Marrow Tasker" },
+      { name: "twitter:description", content: "Start free, upgrade when you need more. Simple, transparent pricing with no hidden fees." },
+    ],
+  }),
 });
 
 function PricingPage() {
@@ -93,7 +105,7 @@ function PricingPage() {
               </div>
 
               <Button variant="primary" size="lg" className="w-full mb-8" asChild>
-                <Link to="/app">
+                <Link to="/sign-up">
                   Get Started Free
                   <ArrowRight size={16} />
                 </Link>

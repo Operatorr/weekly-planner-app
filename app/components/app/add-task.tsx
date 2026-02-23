@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Plus, CalendarDays, Bell, FolderOpen, X } from "lucide-react";
+import { DatePicker } from "@/components/app/date-picker";
+import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
+import { ProjectSelector } from "@/components/app/project-selector";
+import { useTaskContext } from "@/lib/task-context";
+import { Plus } from "lucide-react";
 
-export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?: string }) => void }) {
+export function AddTask() {
+  const { createTask } = useTaskContext();
   const [expanded, setExpanded] = useState(false);
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
+  const [projectId, setProjectId] = useState("personal");
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (expanded && inputRef.current) {
@@ -16,11 +22,38 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
     }
   }, [expanded]);
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    onAdd?.({ name: name.trim(), description: description.trim() || undefined });
-    setName("");
+  // Listen for keyboard shortcut "N" to focus/expand add task
+  useEffect(() => {
+    function handleFocusAddTask() {
+      if (!expanded) {
+        setExpanded(true);
+      } else {
+        inputRef.current?.focus();
+      }
+    }
+    window.addEventListener("marrow:focus-add-task", handleFocusAddTask);
+    return () => window.removeEventListener("marrow:focus-add-task", handleFocusAddTask);
+  }, [expanded]);
+
+  const resetForm = () => {
+    setTitle("");
     setDescription("");
+    setDueDate(null);
+    setReminder({ type: "none" });
+    setProjectId("personal");
+  };
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    createTask({
+      title: title.trim(),
+      description: description.trim() || undefined,
+      due_date: dueDate,
+      project_id: projectId,
+      reminder_type: reminder.type !== "none" ? reminder.type : undefined,
+      reminder_time: reminder.time,
+    });
+    resetForm();
     // Keep expanded for rapid entry
     inputRef.current?.focus();
   };
@@ -32,13 +65,12 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
     }
     if (e.key === "Escape") {
       setExpanded(false);
-      setName("");
-      setDescription("");
+      resetForm();
     }
   };
 
   return (
-    <div ref={containerRef} className="px-1">
+    <div className="px-1">
       {!expanded ? (
         /* Collapsed state */
         <button
@@ -60,8 +92,8 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
             {/* Task name */}
             <input
               ref={inputRef}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Task name"
               aria-label="Task name"
@@ -74,6 +106,12 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setExpanded(false);
+                  resetForm();
+                }
+              }}
               placeholder="Description (optional)"
               aria-label="Task description"
               name="task-description"
@@ -83,18 +121,9 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
 
             {/* Option buttons */}
             <div className="flex items-center gap-1.5">
-              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-xs text-ink-muted bg-bone hover:bg-bone-dark transition-colors">
-                <CalendarDays size={13} />
-                <span>Date</span>
-              </button>
-              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-xs text-ink-muted bg-bone hover:bg-bone-dark transition-colors">
-                <Bell size={13} />
-                <span>Reminder</span>
-              </button>
-              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-xs text-ink-muted bg-bone hover:bg-bone-dark transition-colors">
-                <FolderOpen size={13} />
-                <span>Personal</span>
-              </button>
+              <DatePicker value={dueDate} onChange={setDueDate} compact />
+              <ReminderSelector value={reminder} onChange={setReminder} compact />
+              <ProjectSelector value={projectId} onChange={setProjectId} compact />
             </div>
           </div>
 
@@ -103,8 +132,7 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
             <button
               onClick={() => {
                 setExpanded(false);
-                setName("");
-                setDescription("");
+                resetForm();
               }}
               className="text-xs text-ink-muted hover:text-ink transition-colors"
             >
@@ -114,7 +142,7 @@ export function AddTask({ onAdd }: { onAdd?: (task: { name: string; description?
               variant="primary"
               size="sm"
               onClick={handleSubmit}
-              disabled={!name.trim()}
+              disabled={!title.trim()}
               className="h-7 px-3 text-xs"
             >
               Add Task

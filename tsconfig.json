@@ -16,5 +16,5 @@
       "@/*": ["./app/*"]
     }
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "**/*.d.ts"]
+  "include": ["app/**/*.ts", "app/**/*.tsx", "api/**/*.ts", "**/*.d.ts"]
 }

@@ -4,6 +4,7 @@ dist/
 
 # Build artifacts
 *.timestamp_*.js
+*.tsbuildinfo
 .vinxi/
 
 # IDE

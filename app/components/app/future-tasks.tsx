@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { Task } from "@/lib/mock-data";
-import { formatDate } from "@/lib/mock-data";
+import type { Task } from "@/lib/types";
+import { useTaskContext } from "@/lib/task-context";
 import { TaskItem } from "@/components/app/task-item";
 import { TaskDetail } from "@/components/app/task-detail";
 import { cn } from "@/lib/utils";
@@ -8,19 +8,19 @@ import { ChevronRight } from "lucide-react";
 
 interface FutureTasksProps {
   tasks: Task[];
-  onToggleTask?: (id: string) => void;
 }
 
-export function FutureTasks({ tasks, onToggleTask }: FutureTasksProps) {
+export function FutureTasks({ tasks }: FutureTasksProps) {
+  const { completeTask, uncompleteTask, deleteTask, getChecklist, tasks: allTasks } = useTaskContext();
   const [expanded, setExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const activeTasks = tasks.filter((t) => !t.completed);
+  const activeTasks = tasks.filter((t) => t.status !== "completed");
 
   // Group by week
   const grouped = activeTasks.reduce<Record<string, Task[]>>((acc, task) => {
-    if (!task.dueDate) return acc;
-    const d = new Date(task.dueDate + "T12:00:00");
+    if (!task.due_date) return acc;
+    const d = new Date(task.due_date + "T12:00:00");
     const weekStart = new Date(d);
     const day = weekStart.getDay();
     const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
@@ -32,6 +32,26 @@ export function FutureTasks({ tasks, onToggleTask }: FutureTasksProps) {
   }, {});
 
   const sortedWeeks = Object.keys(grouped).sort();
+
+  const handleToggle = (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (task?.status === "completed") {
+      uncompleteTask(id);
+    } else {
+      completeTask(id);
+    }
+  };
+
+  const getChecklistCount = (taskId: string) => {
+    const items = getChecklist(taskId);
+    if (items.length === 0) return undefined;
+    return { done: items.filter((c) => c.is_completed).length, total: items.length };
+  };
+
+  // Sync selectedTask with latest data
+  const currentSelectedTask = selectedTask
+    ? allTasks.find((t) => t.id === selectedTask.id) || null
+    : null;
 
   if (activeTasks.length === 0) return null;
 
@@ -81,8 +101,10 @@ export function FutureTasks({ tasks, onToggleTask }: FutureTasksProps) {
                     <TaskItem
                       key={task.id}
                       task={task}
-                      onToggle={onToggleTask}
+                      onToggle={handleToggle}
                       onClick={setSelectedTask}
+                      onDelete={deleteTask}
+                      checklistCount={getChecklistCount(task.id)}
                     />
                   ))}
                 </div>
@@ -93,9 +115,9 @@ export function FutureTasks({ tasks, onToggleTask }: FutureTasksProps) {
       )}
 
       {/* Task detail sheet */}
-      {selectedTask && (
+      {currentSelectedTask && (
         <TaskDetail
-          task={selectedTask}
+          task={currentSelectedTask}
           onClose={() => setSelectedTask(null)}
         />
       )}

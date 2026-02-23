@@ -3,8 +3,10 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Navbar() {
+  const { isSignedIn } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -60,12 +62,20 @@ export function Navbar() {
 
         {/* Desktop Auth */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/app">Sign In</Link>
-          </Button>
-          <Button variant="primary" size="sm" asChild>
-            <Link to="/app">Get Started Free</Link>
-          </Button>
+          {isSignedIn ? (
+            <Button variant="primary" size="sm" asChild>
+              <Link to="/app">Go to App</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/sign-in">Sign In</Link>
+              </Button>
+              <Button variant="primary" size="sm" asChild>
+                <Link to="/sign-up">Get Started Free</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -97,12 +107,20 @@ export function Navbar() {
               Pricing
             </Link>
             <div className="pt-2 border-t border-border-subtle space-y-2">
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link to="/app">Sign In</Link>
-              </Button>
-              <Button variant="primary" size="sm" className="w-full" asChild>
-                <Link to="/app">Get Started Free</Link>
-              </Button>
+              {isSignedIn ? (
+                <Button variant="primary" size="sm" className="w-full" asChild>
+                  <Link to="/app" onClick={() => setMobileOpen(false)}>Go to App</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link to="/sign-in" onClick={() => setMobileOpen(false)}>Sign In</Link>
+                  </Button>
+                  <Button variant="primary" size="sm" className="w-full" asChild>
+                    <Link to="/sign-up" onClick={() => setMobileOpen(false)}>Get Started Free</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
