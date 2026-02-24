@@ -415,3 +415,44 @@ body {
 button, a, [role="button"], input, textarea, select {
   touch-action: manipulation;
 }
+
+/* ─── GSAP Animation Utilities ─── */
+
+/* Hero highlight underline - needs transform origin for scaleX animation */
+.hero-highlight {
+  transform-origin: left center;
+}
+
+/* Task item GSAP animation states */
+.task-item {
+  will-change: transform, opacity, box-shadow;
+}
+
+.task-item.dragging {
+  z-index: 50;
+}
+
+/* Drop zone enhanced states */
+.drop-zone-active {
+  transition: border-color 0.2s ease-out, background-color 0.2s ease-out;
+}
+
+/* App preview floating animation base */
+.app-preview {
+  will-change: transform;
+}
+
+/* CTA glow animation target */
+.cta-glow {
+  will-change: opacity, transform;
+}
+
+/* ─── Enhanced Reduced Motion for GSAP ─── */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable will-change hints to save memory */
+  .task-item,
+  .app-preview,
+  .cta-glow {
+    will-change: auto;
+  }
+}

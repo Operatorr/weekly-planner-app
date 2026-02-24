@@ -15,22 +15,37 @@ interface ProjectOption {
 
 interface ProjectSelectorProps {
   value: string;
-  onChange: (projectId: string) => void;
+  onChange: (projectId: string | null) => void;
   projects?: ProjectOption[];
   compact?: boolean;
+  allowNone?: boolean;
 }
-
-const DEFAULT_PROJECTS: ProjectOption[] = [
-  { id: "personal", name: "Personal", color: "#D4644A" },
-];
 
 export function ProjectSelector({
   value,
   onChange,
-  projects = DEFAULT_PROJECTS,
+  projects = [],
   compact,
+  allowNone = true,
 }: ProjectSelectorProps) {
-  const selected = projects.find((p) => p.id === value) || projects[0];
+  const selected = projects.find((p) => p.id === value);
+
+  if (projects.length === 0) {
+    return (
+      <button
+        disabled
+        className={cn(
+          "flex items-center gap-1.5 rounded-[8px] text-xs opacity-50 cursor-not-allowed",
+          compact
+            ? "px-2.5 py-1.5 bg-bone text-ink-muted"
+            : "px-3 py-2.5 bg-bone/40 text-ink-light w-full"
+        )}
+      >
+        <FolderOpen size={compact ? 13 : 15} className="text-clay" />
+        <span>No projects</span>
+      </button>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -45,18 +60,27 @@ export function ProjectSelector({
         >
           <FolderOpen size={compact ? 13 : 15} className="text-clay" />
           {compact ? (
-            <span style={{ color: selected?.color }}>{selected?.name || "Project"}</span>
+            <span style={{ color: selected?.color }} className={!selected ? "text-ink-muted" : ""}>
+              {selected?.name || "No project"}
+            </span>
           ) : (
             <>
               <span className="text-xs text-clay w-16">Project</span>
-              <span className="text-sm" style={{ color: selected?.color }}>
-                {selected?.name || "Select project"}
+              <span className={cn("text-sm", !selected && "text-ink-muted")} style={{ color: selected?.color }}>
+                {selected?.name || "No project"}
               </span>
             </>
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
+      <DropdownMenuContent align="start" className="w-48 bg-white">
+        {allowNone && (
+          <DropdownMenuItem onClick={() => onChange(null)}>
+            <div className="w-3 h-3 rounded-full flex-shrink-0 border border-clay/40" />
+            <span className="text-ink-muted">No project</span>
+            {!value && <Check size={14} className="ml-auto text-ember" />}
+          </DropdownMenuItem>
+        )}
         {projects.map((project) => (
           <DropdownMenuItem
             key={project.id}

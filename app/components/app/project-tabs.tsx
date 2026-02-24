@@ -26,7 +26,7 @@ export function ProjectTabs() {
   const handleCreate = () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
-    createProject.mutate(trimmed);
+    createProject.mutate({ name: trimmed });
     setNewName("");
     setIsCreating(false);
   };

@@ -11,6 +11,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
+import { ProjectProvider } from "@/lib/project-context";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -127,61 +128,63 @@ function AppLayout() {
   }
 
   return (
-    <AppContext.Provider
-      value={{
-        sidebarOpen,
-        toggleSidebar,
-        mobileSidebarOpen,
-        setMobileSidebarOpen,
-        activeProject,
-        setActiveProject,
-        activeView,
-        setActiveView,
-        quickFindOpen,
-        setQuickFindOpen,
-        filterPanelOpen,
-        setFilterPanelOpen,
-        savedFilters,
-      }}
-    >
-      <div className="h-screen flex flex-col bg-surface overflow-hidden">
-        <AppHeader />
-        <div className="flex flex-1 overflow-hidden">
-          <AppSidebar />
-          <main
-            className={cn(
-              "flex-1 flex flex-col overflow-hidden transition-[margin] duration-300",
-              sidebarOpen ? "md:ml-[240px]" : "md:ml-[64px]"
-            )}
-          >
-            <ProjectTabs />
-            <div className="flex-1 overflow-y-auto">
-              <TaskProvider>
-                <Outlet />
-              </TaskProvider>
+    <ProjectProvider>
+      <TaskProvider>
+        <AppContext.Provider
+          value={{
+            sidebarOpen,
+            toggleSidebar,
+            mobileSidebarOpen,
+            setMobileSidebarOpen,
+            activeProject,
+            setActiveProject,
+            activeView,
+            setActiveView,
+            quickFindOpen,
+            setQuickFindOpen,
+            filterPanelOpen,
+            setFilterPanelOpen,
+            savedFilters,
+          }}
+        >
+          <div className="h-screen flex flex-col bg-surface overflow-hidden">
+            <AppHeader />
+            <div className="flex flex-1 overflow-hidden">
+              <AppSidebar />
+              <main
+                className={cn(
+                  "flex-1 flex flex-col overflow-hidden transition-[margin] duration-300",
+                  sidebarOpen ? "md:ml-[240px]" : "md:ml-[64px]"
+                )}
+              >
+                <ProjectTabs />
+                <div className="flex-1 overflow-y-auto">
+                  <Outlet />
+                </div>
+              </main>
             </div>
-          </main>
-        </div>
-      </div>
+          </div>
 
-      {/* Quick Find Modal */}
-      <QuickFind
-        open={quickFindOpen}
-        onClose={() => setQuickFindOpen(false)}
-        onSelectTask={handleSelectTask}
-        onSelectProject={handleSelectProject}
-      />
+          {/* Quick Find Modal */}
+          <QuickFind
+            open={quickFindOpen}
+            onClose={() => setQuickFindOpen(false)}
+            onSelectTask={handleSelectTask}
+            onSelectProject={handleSelectProject}
+          />
 
-      {/* Filter Panel */}
-      <FilterPanel
-        open={filterPanelOpen}
-        onClose={() => setFilterPanelOpen(false)}
-        onApplyFilter={handleApplyFilter}
-        savedFilters={savedFilters}
-        onSaveFilter={handleSaveFilter}
-        onDeleteFilter={handleDeleteFilter}
-        onApplySavedFilter={handleApplySavedFilter}
-      />
-    </AppContext.Provider>
+          {/* Filter Panel */}
+          <FilterPanel
+            open={filterPanelOpen}
+            onClose={() => setFilterPanelOpen(false)}
+            onApplyFilter={handleApplyFilter}
+            savedFilters={savedFilters}
+            onSaveFilter={handleSaveFilter}
+            onDeleteFilter={handleDeleteFilter}
+            onApplySavedFilter={handleApplySavedFilter}
+          />
+        </AppContext.Provider>
+      </TaskProvider>
+    </ProjectProvider>
   );
 }

@@ -52,18 +52,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: "Cannot delete the default project" });
       }
 
-      // Cascade: batch delete checklist items + reminders for all tasks, then tasks, then project
-      await sql`
-        DELETE FROM checklist_items WHERE task_id IN (
-          SELECT id FROM tasks WHERE project_id = ${id} AND user_id = ${userId}
-        )
+      // Get the default project to reassign tasks to
+      const defaultProject = await sql`
+        SELECT id FROM projects WHERE user_id = ${userId} AND is_default = true
       `;
-      await sql`
-        DELETE FROM reminders WHERE task_id IN (
-          SELECT id FROM tasks WHERE project_id = ${id} AND user_id = ${userId}
-        )
-      `;
-      await sql`DELETE FROM tasks WHERE project_id = ${id} AND user_id = ${userId}`;
+
+      if (defaultProject.length > 0) {
+        // Reassign tasks to the default project instead of deleting them
+        await sql`
+          UPDATE tasks
+          SET project_id = ${defaultProject[0].id}, updated_at = NOW()
+          WHERE project_id = ${id} AND user_id = ${userId}
+        `;
+      }
+
+      // Now delete the project (tasks are preserved)
       await sql`DELETE FROM projects WHERE id = ${id} AND user_id = ${userId}`;
 
       await logActivity(userId, "deleted", "project", id, { name: project[0].name });

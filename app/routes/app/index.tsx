@@ -1,5 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useAppContext } from "@/lib/app-context";
 import {
   useTaskContext,
@@ -10,29 +11,60 @@ import {
 } from "@/lib/task-context";
 import { AddTask } from "@/components/app/add-task";
 import { TaskList } from "@/components/app/task-list";
+import { TaskItem } from "@/components/app/task-item";
 import { WeeklyView } from "@/components/app/weekly-view";
 import { FutureTasks } from "@/components/app/future-tasks";
+import type { Task } from "@/lib/types";
+import { useProjects } from "@/hooks/use-projects";
 import { Separator } from "@/components/ui/separator";
+import { TaskListSkeleton, WeeklyViewSkeleton } from "@/components/ui/skeleton";
 import {
   DndContext,
-  closestCenter,
+  DragOverlay,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
+  type DragMoveEvent,
+  type DragCancelEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export const Route = createFileRoute("/app/")({
   component: TaskManagement,
 });
 
 function TaskManagement() {
-  const { activeProject } = useAppContext();
-  const { tasks, updateTask, reorderTasks } = useTaskContext();
-  const [greeting, setGreeting] = useState("");
-  const [dateString, setDateString] = useState("");
+  const { activeProject, activeView } = useAppContext();
+  const { tasks, updateTask, reorderTasks, isLoading } = useTaskContext();
+  const { data: projects = [] } = useProjects();
+  const reducedMotion = useReducedMotion();
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  // Framer Motion values for smooth drag animations
+  const dragRotation = useMotionValue(0);
+  const dragScale = useSpring(1, { stiffness: 400, damping: 30 });
+  const [insertionInfo, setInsertionInfo] = useState<{
+    overId: string;
+    position: 'before' | 'after';
+  } | null>(null);
+
+  const greeting = useMemo(() => getGreeting(), []);
+  const dateString = useMemo(
+    () =>
+      new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }),
+    []
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -43,40 +75,203 @@ function TaskManagement() {
     })
   );
 
-  // Filter tasks by active project
+  // Framer Motion drag animation handlers
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      // Extract real task ID (weekly view tasks have "week-task-" prefix)
+      const activeId = (active.id as string).startsWith("week-task-")
+        ? (active.id as string).replace("week-task-", "")
+        : (active.id as string);
+      const task = tasks.find((t) => t.id === activeId);
+      setActiveTask(task || null);
+
+      if (reducedMotion) return;
+
+      // Animate scale up with spring
+      dragScale.set(1.02);
+      dragRotation.set(1);
+    },
+    [reducedMotion, tasks, dragScale, dragRotation]
+  );
+
+  const handleDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      if (reducedMotion) return;
+
+      const { delta } = event;
+      // Dynamic rotation based on horizontal movement - instant update, no tween
+      const rotation = Math.min(Math.max(delta.x * 0.015, -2), 2);
+      dragRotation.set(rotation);
+    },
+    [reducedMotion, dragRotation]
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { over, active } = event;
+
+      // If no over element (pointer in gap), keep showing last position - don't blink
+      if (!over) return;
+
+      // Dragging over itself - no indicator needed
+      if (over.id === active.id) {
+        setInsertionInfo(null);
+        return;
+      }
+
+      // Only show insertion indicator for task-to-task reordering
+      const overId = over.id as string;
+      // Allow week-task- (weekly view tasks) but not week- (date columns)
+      const isWeekColumn = overId.startsWith("week-") && !overId.startsWith("week-task-");
+      if (
+        typeof overId === "string" &&
+        !isWeekColumn &&
+        !overId.startsWith("sidebar-") &&
+        overId !== "tasklist-drop"
+      ) {
+        // Get pointer position from the event
+        const activatorEvent = event.activatorEvent as PointerEvent;
+        const pointerY = activatorEvent.clientY + event.delta.y;
+        const overRect = over.rect;
+        const midpoint = overRect.top + overRect.height / 2;
+
+        setInsertionInfo({
+          overId,
+          position: pointerY < midpoint ? "before" : "after",
+        });
+      } else {
+        // Dragging over non-task elements (sidebar, week columns, etc.)
+        setInsertionInfo(null);
+      }
+    },
+    []
+  );
+
+  const resetDragAnimation = useCallback(() => {
+    setActiveTask(null);
+    setInsertionInfo(null);
+
+    if (reducedMotion) return;
+
+    // Reset motion values - spring will animate smoothly
+    dragScale.set(1);
+    dragRotation.set(0);
+  }, [reducedMotion, dragScale, dragRotation]);
+
+  const handleDragCancel = useCallback(
+    (_event: DragCancelEvent) => {
+      resetDragAnimation();
+    },
+    [resetDragAnimation]
+  );
+
+  // Filter tasks by active project and view
   const filteredTasks = useMemo(() => {
-    if (activeProject === "all") return tasks;
-    return tasks.filter((t) => t.project_id === activeProject);
+    let result = tasks;
+
+    // Filter by project
+    if (activeProject !== "all") {
+      result = result.filter((t) => t.project_id === activeProject);
+    }
+
+    // Filter by view
+    switch (activeView) {
+      case "today":
+        // Today view shows:
+        // - Overdue tasks (past due_date)
+        // - Due today
+        // - Undated tasks (no due_date and is_someday = false)
+        result = result.filter(
+          (t) =>
+            !t.is_someday &&
+            (
+              (t.due_date && (isToday(t.due_date) || isPast(t.due_date))) ||
+              !t.due_date
+            )
+        );
+        break;
+      case "upcoming":
+        // Upcoming: tasks with future due dates only (not today, not past)
+        result = result.filter(
+          (t) =>
+            t.due_date &&
+            !isToday(t.due_date) &&
+            !isPast(t.due_date)
+        );
+        break;
+      case "someday":
+        // Someday: only explicitly deferred tasks
+        result = result.filter((t) => t.is_someday);
+        break;
+      case "inbox":
+      default:
+        // Inbox: show all tasks (no filter)
+        break;
+    }
+
+    return result;
+  }, [tasks, activeProject, activeView]);
+
+  // Weekly view tasks: project-filtered only (not view-filtered) for this week's tasks
+  const weeklyViewTasks = useMemo(() => {
+    let result = tasks;
+
+    // Filter by project only
+    if (activeProject !== "all") {
+      result = result.filter((t) => t.project_id === activeProject);
+    }
+
+    // Filter for this week's tasks (not today, includes overdue from this week)
+    return result.filter(
+      (t) =>
+        t.due_date &&
+        isThisWeek(t.due_date) &&
+        !isToday(t.due_date) &&
+        t.status !== "completed"
+    );
   }, [tasks, activeProject]);
 
-  useEffect(() => {
-    setGreeting(getGreeting());
-    setDateString(
-      new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      })
-    );
-  }, []);
+  // Determine which sections to show based on view
+  const showWeeklyView = activeView === "today" || activeView === "inbox";
+  const showFutureTasks = activeView === "today" || activeView === "inbox";
 
-  // Section 2: undated + overdue + today
-  const section2Tasks = filteredTasks.filter(
-    (t) =>
-      !t.due_date ||
-      (t.due_date && isToday(t.due_date)) ||
-      (t.due_date && isPast(t.due_date) && !isToday(t.due_date))
-  );
+  // Section 2: Tasks to show in the main task list
+  // For upcoming/someday: show all filtered tasks (already filtered by view)
+  // For today/inbox: show undated + overdue + today
+  // IMPORTANT: Must match the sort order used in TaskList for drag-to-reorder to work correctly
+  const section2Tasks = useMemo(() => {
+    let result: Task[];
 
-  // Section 3: this week (future days only, not today)
-  const section3Tasks = filteredTasks.filter(
-    (t) =>
-      t.due_date &&
-      isThisWeek(t.due_date) &&
-      !isToday(t.due_date) &&
-      !isPast(t.due_date) &&
-      t.status !== "completed"
-  );
+    if (activeView === "upcoming") {
+      // Upcoming: show all filtered tasks sorted by date (chronological)
+      result = [...filteredTasks].sort((a, b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return a.due_date.localeCompare(b.due_date);
+      });
+    } else if (activeView === "someday") {
+      // Someday: show all filtered tasks (already filtered to is_someday)
+      result = filteredTasks;
+    } else {
+      // Today/Inbox: show undated + overdue + today
+      result = filteredTasks.filter(
+        (t) =>
+          !t.due_date ||
+          (t.due_date && isToday(t.due_date)) ||
+          (t.due_date && isPast(t.due_date) && !isToday(t.due_date))
+      );
+    }
+
+    // Sort to match TaskList's visual order: overdue first, then by sort_order
+    return [...result].sort((a, b) => {
+      if (a.due_date && b.due_date) {
+        if (isPast(a.due_date) && !isPast(b.due_date)) return -1;
+        if (!isPast(a.due_date) && isPast(b.due_date)) return 1;
+      }
+      return a.sort_order - b.sort_order;
+    });
+  }, [filteredTasks, activeView]);
 
   // Section 4: beyond this week
   const section4Tasks = filteredTasks.filter(
@@ -87,16 +282,41 @@ function TaskManagement() {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      // Reset GSAP animations
+      resetDragAnimation();
+
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const activeId = active.id as string;
+      const rawActiveId = active.id as string;
       const overId = over.id as string;
 
-      // Check if dropping onto a week column (droppable id starts with "week-")
-      if (typeof overId === "string" && overId.startsWith("week-")) {
+      // Extract real task ID (weekly view tasks have "week-task-" prefix)
+      const activeId = rawActiveId.startsWith("week-task-")
+        ? rawActiveId.replace("week-task-", "")
+        : rawActiveId;
+
+      // Check if dropping onto a week column (droppable id starts with "week-" but NOT "week-task-")
+      if (typeof overId === "string" && overId.startsWith("week-") && !overId.startsWith("week-task-")) {
         const newDate = overId.replace("week-", "");
-        updateTask(activeId, { due_date: newDate });
+        updateTask(activeId, { due_date: newDate, is_someday: false });
+        return;
+      }
+
+      // Check if dropping onto sidebar nav items
+      if (typeof overId === "string" && overId.startsWith("sidebar-")) {
+        const view = overId.replace("sidebar-", "");
+
+        switch (view) {
+          case "today":
+            // Move to today (clear due date so it appears in Today section, clear someday)
+            updateTask(activeId, { due_date: null, is_someday: false });
+            break;
+          case "someday":
+            // Move to someday (clear due date, set someday flag)
+            updateTask(activeId, { due_date: null, is_someday: true });
+            break;
+        }
         return;
       }
 
@@ -104,20 +324,68 @@ function TaskManagement() {
       if (overId === "tasklist-drop") {
         const draggedTask = tasks.find((t) => t.id === activeId);
         if (draggedTask?.due_date && !isToday(draggedTask.due_date) && !isPast(draggedTask.due_date)) {
-          updateTask(activeId, { due_date: null });
+          updateTask(activeId, { due_date: null, is_someday: false });
         }
         return;
       }
 
+      // Extract real task ID from overId (weekly view tasks have "week-task-" prefix)
+      const realOverId = overId.startsWith("week-task-")
+        ? overId.replace("week-task-", "")
+        : overId;
+
       // Reorder within same section
       const activeTask = tasks.find((t) => t.id === activeId);
-      const overTask = tasks.find((t) => t.id === overId);
+      const overTask = tasks.find((t) => t.id === realOverId);
       if (!activeTask || !overTask) return;
 
-      // Find the section the tasks are in
-      const sectionTasks = section2Tasks.filter((t) => t.status !== "completed");
+      // Check if dragging from weekly view into section2 (today's task list)
+      const section2Ids = new Set(section2Tasks.map((t) => t.id));
+      const isDropOnSection2 = section2Ids.has(realOverId);
+      const isDraggingFromWeekly = activeTask.due_date &&
+        !isToday(activeTask.due_date) &&
+        !isPast(activeTask.due_date);
+
+      if (isDropOnSection2 && isDraggingFromWeekly) {
+        // Cross-section drop: clear date AND set position
+        const incompleteTasks = section2Tasks.filter(t => t.status !== "completed");
+        const overIdx = incompleteTasks.findIndex((t) => t.id === realOverId);
+
+        // Build new task order with the dragged task inserted at drop position
+        const newTaskIds = incompleteTasks.map(t => t.id);
+        newTaskIds.splice(overIdx, 0, activeId);
+
+        // Update the dragged task's date to make it undated
+        updateTask(activeId, { due_date: null, is_someday: false });
+
+        // Reorder all tasks to maintain positions
+        const orders = newTaskIds.map((_, i) => i);
+        reorderTasks(newTaskIds, orders);
+        return;
+      }
+
+      // Determine which section to reorder in based on the over task
+      let sectionTasks: typeof tasks = [];
+
+      // Check section 2 (undated + today + overdue)
+      if (section2Ids.has(realOverId)) {
+        sectionTasks = section2Tasks.filter((t) => t.status !== "completed");
+      }
+      // Check weekly view tasks (this week)
+      const weeklyViewIds = new Set(weeklyViewTasks.map((t) => t.id));
+      if (weeklyViewIds.has(realOverId)) {
+        sectionTasks = weeklyViewTasks.filter((t) => t.status !== "completed");
+      }
+      // Check section 4 (beyond this week)
+      const section4Ids = new Set(section4Tasks.map((t) => t.id));
+      if (section4Ids.has(realOverId)) {
+        sectionTasks = section4Tasks.filter((t) => t.status !== "completed");
+      }
+
+      if (sectionTasks.length === 0) return;
+
       const activeIdx = sectionTasks.findIndex((t) => t.id === activeId);
-      const overIdx = sectionTasks.findIndex((t) => t.id === overId);
+      const overIdx = sectionTasks.findIndex((t) => t.id === realOverId);
 
       if (activeIdx !== -1 && overIdx !== -1) {
         const reordered = arrayMove(sectionTasks, activeIdx, overIdx);
@@ -126,14 +394,18 @@ function TaskManagement() {
         reorderTasks(ids, orders);
       }
     },
-    [tasks, section2Tasks, updateTask, reorderTasks]
+    [tasks, section2Tasks, weeklyViewTasks, section4Tasks, updateTask, reorderTasks, resetDragAnimation]
   );
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="max-w-[960px] mx-auto py-6 px-4 space-y-8">
         {/* Welcome heading */}
@@ -147,36 +419,80 @@ function TaskManagement() {
         {/* Section 1: Add Task */}
         <AddTask />
 
-        {/* Section 2: Task List (undated, overdue, today) */}
-        <TaskList
-          tasks={section2Tasks}
-          title="Tasks"
-          count={activeSection2Count}
-        />
+        {isLoading ? (
+          <>
+            {/* Loading skeletons */}
+            <TaskListSkeleton count={4} />
+            {showWeeklyView && (
+              <>
+                <div className="px-4">
+                  <Separator />
+                </div>
+                <WeeklyViewSkeleton />
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Section 2: Task List (undated, overdue, today) */}
+            <TaskList
+              tasks={section2Tasks}
+              title="Tasks"
+              count={activeSection2Count}
+              insertionInfo={insertionInfo}
+              projects={projects}
+              showProject={activeView === "inbox" || activeView === "today"}
+            />
 
-        <div className="px-4">
-          <Separator />
-        </div>
+            {showWeeklyView && (
+              <>
+                <div className="px-4">
+                  <Separator />
+                </div>
 
-        {/* Section 3: Weekly View */}
-        <WeeklyView tasks={section3Tasks} />
+                {/* Section 3: Weekly View */}
+                <WeeklyView tasks={weeklyViewTasks} />
+              </>
+            )}
 
-        <div className="px-4">
-          <Separator />
-        </div>
+            {showFutureTasks && (
+              <>
+                <div className="px-4">
+                  <Separator />
+                </div>
 
-        {/* Section 4: Future Tasks */}
-        <FutureTasks tasks={section4Tasks} />
+                {/* Section 4: Future Tasks */}
+                <FutureTasks tasks={section4Tasks} />
+              </>
+            )}
+          </>
+        )}
 
         {/* Bottom padding */}
         <div className="h-16" />
       </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeTask ? (
+          <motion.div
+            data-drag-overlay
+            style={{
+              scale: dragScale,
+              rotate: dragRotation,
+              boxShadow: "0 12px 40px rgba(44, 40, 37, 0.12)",
+            }}
+          >
+            <TaskItem task={activeTask} sortable={false} />
+          </motion.div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
 
 function getGreeting(): string {
   const hour = new Date().getHours();
+  if (hour < 5 || hour >= 21) return "Good night";
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";

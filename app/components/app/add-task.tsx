@@ -4,23 +4,37 @@ import { DatePicker } from "@/components/app/date-picker";
 import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
 import { ProjectSelector } from "@/components/app/project-selector";
 import { useTaskContext } from "@/lib/task-context";
+import { useAppContext } from "@/lib/app-context";
+import { useProjects } from "@/hooks/use-projects";
+import { useUserTier } from "@/hooks/use-user-tier";
 import { Plus } from "lucide-react";
 
 export function AddTask() {
   const { createTask } = useTaskContext();
+  const { activeProject, activeView } = useAppContext();
+  const { data: projects = [] } = useProjects();
+  const { data: userTier = "free" } = useUserTier();
   const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
-  const [projectId, setProjectId] = useState("personal");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Get the default project for the current context (null when viewing "all")
+  const getDefaultProject = () => (activeProject !== "all" ? activeProject : null);
+
+  // When form expands, focus input and set default project based on active view
   useEffect(() => {
-    if (expanded && inputRef.current) {
-      inputRef.current.focus();
+    if (expanded) {
+      inputRef.current?.focus();
+      // Set project to active project only if viewing a specific project
+      if (projectId === null) {
+        setProjectId(getDefaultProject());
+      }
     }
-  }, [expanded]);
+  }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for keyboard shortcut "N" to focus/expand add task
   useEffect(() => {
@@ -40,22 +54,29 @@ export function AddTask() {
     setDescription("");
     setDueDate(null);
     setReminder({ type: "none" });
-    setProjectId("personal");
+    setProjectId(getDefaultProject());
   };
 
   const handleSubmit = () => {
     if (!title.trim()) return;
+
+    // Determine is_someday based on current view
+    const isSomeday = activeView === "someday";
+
+    // Fire and forget - optimistic update handles UI immediately
     createTask({
       title: title.trim(),
       description: description.trim() || undefined,
       due_date: dueDate,
-      project_id: projectId,
+      project_id: projectId || null,
+      is_someday: isSomeday,
       reminder_type: reminder.type !== "none" ? reminder.type : undefined,
       reminder_time: reminder.time,
     });
+
+    // Close form immediately - task appears instantly via optimistic update
     resetForm();
-    // Keep expanded for rapid entry
-    inputRef.current?.focus();
+    setExpanded(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -99,7 +120,7 @@ export function AddTask() {
               aria-label="Task name"
               name="task-name"
               autoComplete="off"
-              className="w-full text-[0.9375rem] font-medium text-ink placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md"
+              className="w-full px-2 py-1.5 text-[0.9375rem] font-medium text-ink placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md"
             />
 
             {/* Description */}
@@ -116,14 +137,19 @@ export function AddTask() {
               aria-label="Task description"
               name="task-description"
               rows={2}
-              className="w-full text-sm text-ink-light placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md resize-none leading-relaxed"
+              className="w-full px-2 py-1.5 text-sm text-ink-light placeholder:text-clay bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md resize-none leading-relaxed"
             />
 
             {/* Option buttons */}
             <div className="flex items-center gap-1.5">
               <DatePicker value={dueDate} onChange={setDueDate} compact />
-              <ReminderSelector value={reminder} onChange={setReminder} compact />
-              <ProjectSelector value={projectId} onChange={setProjectId} compact />
+              <ReminderSelector value={reminder} onChange={setReminder} compact userTier={userTier} />
+              <ProjectSelector
+                value={projectId || ""}
+                onChange={setProjectId}
+                projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color }))}
+                compact
+              />
             </div>
           </div>
 

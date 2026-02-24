@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { Task } from "@/lib/types";
+import { useState, useRef, useEffect } from "react";
+import type { Task, Project } from "@/lib/types";
 import { formatDate, isToday, isPast } from "@/lib/task-context";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,19 +17,27 @@ import {
   Pencil,
   Check,
   Trash2,
+  Archive,
+  Sun,
 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { gsap } from "@/lib/gsap-config";
+import { easings } from "@/lib/animation-presets";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { createCompletionParticles } from "@/hooks/use-drag-animation";
 
 interface TaskItemProps {
   task: Task;
   onToggle?: (id: string) => void;
   onClick?: (task: Task) => void;
   onDelete?: (id: string) => void;
+  onUpdate?: (id: string, updates: Partial<Task>) => void;
   showProject?: boolean;
+  project?: Project;
   compact?: boolean;
   checklistCount?: { done: number; total: number };
   sortable?: boolean;
+  insertPosition?: "before" | "after" | null;
 }
 
 export function TaskItem({
@@ -37,31 +45,38 @@ export function TaskItem({
   onToggle,
   onClick,
   onDelete,
+  onUpdate,
   showProject,
+  project,
   compact,
   checklistCount,
   sortable = false,
+  insertPosition,
 }: TaskItemProps) {
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const itemRef = useRef<HTMLDivElement>(null);
+  const checkboxRef = useRef<HTMLButtonElement>(null);
+  const reducedMotion = useReducedMotion();
 
   const {
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
   } = useSortable({
     id: task.id,
     disabled: !sortable,
   });
 
+  // GSAP drag feedback is now handled by DragOverlay in the parent
+  // The original element is hidden during drag to avoid duplication
+
+  // Notion-style: items stay static during drag, only insertion indicator moves
+  // Don't apply transform/transition - items won't shift around
   const style = sortable
     ? {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : undefined,
+        opacity: isDragging ? 0 : 1,
         zIndex: isDragging ? 50 : undefined,
       }
     : undefined;
@@ -70,6 +85,29 @@ export function TaskItem({
     e.stopPropagation();
     if (task.status === "completed") return;
     setCompleting(true);
+
+    // GSAP celebration animation
+    if (!reducedMotion && checkboxRef.current) {
+      const rect = checkboxRef.current.getBoundingClientRect();
+
+      // Pulse animation on checkbox
+      gsap.to(checkboxRef.current, {
+        scale: 1.3,
+        duration: 0.15,
+        ease: easings.outExpo,
+        onComplete: () => {
+          gsap.to(checkboxRef.current, {
+            scale: 1,
+            duration: 0.3,
+            ease: easings.spring,
+          });
+        },
+      });
+
+      // Create celebration particles
+      createCompletionParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
     setTimeout(() => {
       onToggle?.(task.id);
       setCompleting(false);
@@ -88,9 +126,16 @@ export function TaskItem({
     ? `${checklistCount.done}/${checklistCount.total}`
     : undefined;
 
+  // Combine refs for both dnd-kit and our GSAP animations
+  const setRefs = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+  };
+
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
+      data-task-id={task.id}
       style={style}
       role="button"
       tabIndex={0}
@@ -104,12 +149,19 @@ export function TaskItem({
         }
       }}
       className={cn(
-        "group flex items-start gap-3 px-4 py-2.5 rounded-[12px] transition-colors duration-200 cursor-pointer select-none w-full text-left",
-        completing && "opacity-50 scale-[0.98]",
-        isDragging && "shadow-lg bg-surface-raised",
+        "task-item group flex items-start gap-3 px-4 py-2.5 rounded-[12px] cursor-pointer select-none w-full text-left relative",
+        !isDragging && "transition-colors duration-200",
+        completing && "opacity-50",
+        isDragging && "bg-surface-raised",
         task.status === "completed"
           ? "opacity-40"
-          : "hover:bg-bone/50 active:scale-[0.995]"
+          : "hover:bg-bone/50",
+        // Insertion indicator via pseudo-elements (no DOM changes during drag)
+        // Subtle glowing ember line with pulse
+        insertPosition === "before" &&
+          "before:absolute before:top-0 before:left-3 before:right-3 before:h-0.5 before:-translate-y-1/2 before:bg-ember/50 before:rounded-full before:shadow-[0_0_6px_rgba(212,100,74,0.4)] before:animate-pulse",
+        insertPosition === "after" &&
+          "after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:translate-y-1/2 after:bg-ember/50 after:rounded-full after:shadow-[0_0_6px_rgba(212,100,74,0.4)] after:animate-pulse"
       )}
     >
       {/* Drag handle (visible on hover) */}
@@ -118,22 +170,23 @@ export function TaskItem({
           {...attributes}
           {...listeners}
           className={cn(
-            "pt-0.5 -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
-            hovered && task.status !== "completed" ? "opacity-30" : "opacity-0"
+            "self-center -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
+            hovered && task.status !== "completed" ? "opacity-50" : "opacity-0"
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical size={14} className="text-clay" />
+          <GripVertical size={18} className="text-clay" />
         </div>
       )}
 
       {/* Checkbox */}
       <button
+        ref={checkboxRef}
         onClick={handleCheck}
         className={cn(
-          "relative w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-[border-color,background-color,transform] duration-200",
+          "task-checkbox relative w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 self-center transition-[border-color,background-color] duration-200",
           task.status === "completed" || completing
-            ? "border-sage bg-sage scale-100"
+            ? "border-sage bg-sage"
             : "border-clay-light hover:border-ember hover:scale-110"
         )}
       >
@@ -180,6 +233,12 @@ export function TaskItem({
         {/* Metadata row */}
         {!compact && (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {task.is_someday && (
+              <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-clay/10 text-clay">
+                <Archive size={10} className="mr-1" />
+                Someday
+              </Badge>
+            )}
             {task.due_date && dateBadgeVariant && (
               <Badge variant={dateBadgeVariant} className="text-[10px] py-0 px-1.5">
                 <CalendarDays size={10} className="mr-1" />
@@ -189,10 +248,14 @@ export function TaskItem({
             {checklistProgress && (
               <span className="text-[10px] text-clay">{checklistProgress}</span>
             )}
-            {showProject && (
-              <Badge variant="ember" className="text-[10px] py-0 px-1.5">
-                Personal
-              </Badge>
+            {showProject && project && (
+              <span className="flex items-center gap-1 text-[10px] text-ink-muted">
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: project.color }}
+                />
+                {project.name}
+              </span>
             )}
           </div>
         )}
@@ -215,7 +278,7 @@ export function TaskItem({
               <MoreHorizontal size={14} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuContent align="end" className="w-48 bg-white">
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -234,6 +297,39 @@ export function TaskItem({
               <Check size={14} className="text-clay" />
               <span>{task.status === "completed" ? "Uncomplete" : "Complete"}</span>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* Schedule options */}
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                const today = new Date().toISOString().split("T")[0];
+                onUpdate?.(task.id, { due_date: today, is_someday: false });
+              }}
+            >
+              <Sun size={14} className="text-clay" />
+              <span>Schedule for Today</span>
+            </DropdownMenuItem>
+            {task.is_someday ? (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate?.(task.id, { due_date: null, is_someday: false });
+                }}
+              >
+                <Sun size={14} className="text-clay" />
+                <span>Move to Today</span>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate?.(task.id, { due_date: null, is_someday: true });
+                }}
+              >
+                <Archive size={14} className="text-clay" />
+                <span>Move to Someday</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={(e) => {

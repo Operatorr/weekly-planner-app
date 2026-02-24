@@ -3,15 +3,23 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDate } from "@/lib/task-context";
 import { cn } from "@/lib/utils";
-import { CalendarDays, X } from "lucide-react";
+import { CalendarDays, X, Archive } from "lucide-react";
 
 interface DatePickerProps {
   value?: string | null;
   onChange: (date: string | null) => void;
+  isSomeday?: boolean;
+  onSomedayChange?: (isSomeday: boolean) => void;
   compact?: boolean;
 }
 
-export function DatePicker({ value, onChange, compact }: DatePickerProps) {
+export function DatePicker({
+  value,
+  onChange,
+  isSomeday = false,
+  onSomedayChange,
+  compact,
+}: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   const selectedDate = value ? new Date(value + "T12:00:00") : undefined;
@@ -20,10 +28,31 @@ export function DatePicker({ value, onChange, compact }: DatePickerProps) {
     if (date) {
       const dateStr = date.toISOString().split("T")[0];
       onChange(dateStr);
+      // Selecting a date clears someday status
+      onSomedayChange?.(false);
     } else {
       onChange(null);
     }
     setOpen(false);
+  };
+
+  const handleSomeday = () => {
+    onChange(null); // Clear date when moving to someday
+    onSomedayChange?.(true);
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange(null);
+    onSomedayChange?.(false);
+    setOpen(false);
+  };
+
+  // Display text based on state
+  const getDisplayText = () => {
+    if (isSomeday) return "Someday";
+    if (value) return formatDate(value);
+    return compact ? "Date" : "No date";
   };
 
   return (
@@ -37,22 +66,38 @@ export function DatePicker({ value, onChange, compact }: DatePickerProps) {
               : "px-3 py-2.5 bg-bone/40 hover:bg-bone/60 text-ink-light w-full"
           )}
         >
-          <CalendarDays size={compact ? 13 : 15} className={value ? "text-ember" : "text-clay"} />
+          {isSomeday ? (
+            <Archive size={compact ? 13 : 15} className="text-clay" />
+          ) : (
+            <CalendarDays
+              size={compact ? 13 : 15}
+              className={value ? "text-ember" : "text-clay"}
+            />
+          )}
           {compact ? (
-            <span>{value ? formatDate(value) : "Date"}</span>
+            <span className={isSomeday ? "text-clay" : undefined}>
+              {getDisplayText()}
+            </span>
           ) : (
             <>
-              <span className={cn("text-xs text-clay", !compact && "w-16")}>Date</span>
-              <span className="text-sm text-ink-light">
-                {value ? formatDate(value) : "No date"}
+              <span className={cn("text-xs text-clay", !compact && "w-16")}>
+                Date
+              </span>
+              <span
+                className={cn(
+                  "text-sm",
+                  isSomeday ? "text-clay" : "text-ink-light"
+                )}
+              >
+                {getDisplayText()}
               </span>
             </>
           )}
-          {value && (
+          {(value || isSomeday) && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onChange(null);
+                handleClear();
               }}
               className="ml-auto w-4 h-4 rounded-full flex items-center justify-center text-clay hover:text-ink hover:bg-bone-dark transition-colors"
               aria-label="Clear date"
@@ -69,19 +114,65 @@ export function DatePicker({ value, onChange, compact }: DatePickerProps) {
           onSelect={handleSelect}
           defaultMonth={selectedDate || new Date()}
         />
-        {value && (
-          <div className="px-3 pb-3">
+        <div className="px-3 pb-3 space-y-1">
+          {/* Quick date options */}
+          <div className="flex gap-1 mb-2">
             <button
               onClick={() => {
-                onChange(null);
+                const today = new Date().toISOString().split("T")[0];
+                onChange(today);
+                onSomedayChange?.(false);
                 setOpen(false);
               }}
+              className="flex-1 text-xs py-1.5 px-2 rounded-md bg-bone hover:bg-bone-dark text-ink-muted transition-colors"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                onChange(tomorrow.toISOString().split("T")[0]);
+                onSomedayChange?.(false);
+                setOpen(false);
+              }}
+              className="flex-1 text-xs py-1.5 px-2 rounded-md bg-bone hover:bg-bone-dark text-ink-muted transition-colors"
+            >
+              Tomorrow
+            </button>
+          </div>
+
+          {/* Someday option */}
+          {onSomedayChange && (
+            <button
+              onClick={handleSomeday}
+              className={cn(
+                "w-full flex items-center gap-2 text-xs py-2 px-2 rounded-md transition-colors",
+                isSomeday
+                  ? "bg-ember/10 text-ember"
+                  : "hover:bg-bone text-clay hover:text-ink-muted"
+              )}
+            >
+              <Archive size={14} />
+              <span>Someday</span>
+              {isSomeday && (
+                <span className="ml-auto text-[10px] bg-ember/20 px-1.5 py-0.5 rounded">
+                  Active
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Remove date */}
+          {(value || isSomeday) && (
+            <button
+              onClick={handleClear}
               className="w-full text-xs text-clay hover:text-ink-muted py-1.5 transition-colors"
             >
               Remove date
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

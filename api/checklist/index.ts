@@ -6,14 +6,39 @@ import { addChecklistItemSchema } from "../_lib/schemas";
 import { logActivity } from "../_lib/activity";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
   try {
     const { userId } = await authenticateRequest(req);
-    const data = parseBody(req, addChecklistItemSchema);
     const sql = neon(process.env.DATABASE_URL!);
+
+    // GET - Fetch checklist items for a task
+    if (req.method === "GET") {
+      const { task_id } = req.query;
+      if (typeof task_id !== "string") {
+        return res.status(400).json({ error: "task_id query parameter required" });
+      }
+
+      // Verify the task belongs to the user
+      const tasks = await sql`
+        SELECT id FROM tasks WHERE id = ${task_id} AND user_id = ${userId}
+      `;
+      if (tasks.length === 0) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      const rows = await sql`
+        SELECT * FROM checklist_items
+        WHERE task_id = ${task_id}
+        ORDER BY sort_order ASC
+      `;
+      return res.status(200).json(rows);
+    }
+
+    // POST - Add checklist item
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    const data = parseBody(req, addChecklistItemSchema);
 
     // Verify the task belongs to the user
     const tasks = await sql`

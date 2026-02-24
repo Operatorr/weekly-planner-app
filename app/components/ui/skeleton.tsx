@@ -30,11 +30,20 @@ export function TaskItemSkeleton() {
 
 export function TaskListSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="space-y-0.5 px-1">
-      {Array.from({ length: count }).map((_, i) => (
-        <TaskItemSkeleton key={i} />
-      ))}
-    </div>
+    <section>
+      {/* Header skeleton to match TaskList structure */}
+      <div className="flex items-center justify-between px-5 mb-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-4 w-5 rounded-full" />
+        </div>
+      </div>
+      <div className="space-y-0.5 px-1">
+        {Array.from({ length: count }).map((_, i) => (
+          <TaskItemSkeleton key={i} />
+        ))}
+      </div>
+    </section>
   );
 }
 

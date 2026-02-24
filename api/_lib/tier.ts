@@ -46,3 +46,23 @@ export function getActivityCutoff(tier: UserTier): Date | null {
   cutoff.setDate(cutoff.getDate() - days);
   return cutoff;
 }
+
+export async function cleanupOldCompletedTasks(userId: string): Promise<number> {
+  const sql = getDb();
+  const tier = await getUserTier(userId);
+  const cutoff = getActivityCutoff(tier);
+
+  // Pro users have no cutoff (unlimited retention)
+  if (cutoff === null) return 0;
+
+  const result = await sql`
+    DELETE FROM tasks
+    WHERE user_id = ${userId}
+      AND status = 'completed'
+      AND completed_at IS NOT NULL
+      AND completed_at < ${cutoff.toISOString()}
+    RETURNING id
+  `;
+
+  return result.length;
+}

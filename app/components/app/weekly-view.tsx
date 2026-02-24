@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Task } from "@/lib/types";
-import { getWeekDays, getWeekRange } from "@/lib/task-context";
+import { getWeekDays, getWeekRange, normalizeDate, isPast, isToday } from "@/lib/task-context";
 import { useTaskContext } from "@/lib/task-context";
 import { TaskDetail } from "@/components/app/task-detail";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 interface WeeklyViewProps {
   tasks: Task[];
@@ -28,33 +27,37 @@ function DraggableWeekTask({
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: `week-task-${task.id}` });
 
+  // Notion-style: items stay static during drag
+  // Don't apply transform/transition - items won't shift around
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : undefined,
+    opacity: isDragging ? 0 : 1,
     zIndex: isDragging ? 50 : undefined,
   };
+
+  const isOverdue = task.due_date && isPast(task.due_date) && !isToday(task.due_date);
 
   return (
     <button
       ref={setNodeRef}
+      data-task-id={task.id}
       style={style}
       {...attributes}
       {...listeners}
       onClick={() => onClick(task)}
       className={cn(
-        "w-full text-left px-2 py-1.5 rounded-[8px] text-xs text-ink-light truncate transition-colors",
+        "task-item w-full text-left px-2 py-1.5 rounded-[8px] text-xs text-ink-light truncate transition-colors",
         "hover:bg-bone/60",
-        isDragging && "shadow-md bg-surface-raised"
+        isDragging && "bg-surface-raised"
       )}
     >
       <div className="flex items-center gap-1.5">
-        <div className="w-3 h-3 rounded-full border-[1.5px] border-clay-light flex-shrink-0" />
+        <div className={cn(
+          "w-3 h-3 rounded-full border-[1.5px] flex-shrink-0",
+          isOverdue ? "border-ember" : "border-clay-light"
+        )} />
         <span className="truncate">{task.title}</span>
       </div>
     </button>
@@ -78,11 +81,12 @@ function DayColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-[12px] border transition-colors min-h-[180px]",
-        isOver && "border-ember/40 bg-ember/[0.05]",
+        "rounded-[12px] border min-h-[180px] transition-all duration-200",
         day.isToday
           ? "border-ember/20 bg-ember/[0.02]"
-          : "border-border-subtle bg-surface-raised/50 hover:border-border"
+          : "border-border-subtle bg-surface-raised/50 hover:border-border",
+        // Drop zone highlight
+        isOver && "scale-[1.02] border-ember/40 bg-ember/5 shadow-lg shadow-ember/10"
       )}
     >
       {/* Day header */}
@@ -107,7 +111,7 @@ function DayColumn({
 
       {/* Day tasks */}
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-        <div className="p-1 space-y-0.5">
+        <div className="p-1 flex flex-col gap-0.5">
           {tasks.map((task) => (
             <DraggableWeekTask
               key={task.id}
@@ -170,7 +174,7 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
         <div className="grid grid-cols-7 gap-1.5 min-h-[200px]">
           {weekDays.map((day) => {
             const dayTasks = tasks.filter(
-              (t) => t.due_date === day.date && t.status !== "completed"
+              (t) => t.due_date && normalizeDate(t.due_date) === day.date && t.status !== "completed"
             );
 
             return (

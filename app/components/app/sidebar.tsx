@@ -1,3 +1,4 @@
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useAppContext } from "@/lib/app-context";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -6,10 +7,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useProjects } from "@/hooks/use-projects";
+import { useProjects, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
+import { useTaskContext, normalizeDate } from "@/lib/task-context";
+import { useDroppable } from "@dnd-kit/core";
+import { ColorPicker } from "@/components/app/color-picker";
+import type { Project } from "@/lib/types";
 import {
   Sun,
   Calendar,
@@ -20,6 +35,10 @@ import {
   Plus,
   Filter,
   SlidersHorizontal,
+  Palette,
+  Pencil,
+  Trash2,
+  MoreHorizontal,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,22 +48,81 @@ interface NavItem {
   badge?: number;
 }
 
-const topNavItems: NavItem[] = [
-  { id: "inbox", label: "Inbox", icon: <Inbox size={18} /> },
-  { id: "today", label: "Today", icon: <Sun size={18} />, badge: 3 },
-  { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} /> },
-  { id: "someday", label: "Someday", icon: <Archive size={18} /> },
-];
-
 const bottomNavItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: <Clock size={18} /> },
   { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
-  const { activeView, setActiveView, savedFilters, setFilterPanelOpen } = useAppContext();
+  const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen } = useAppContext();
   const { data: projects = [] } = useProjects();
+  const { mutate: updateProject } = useUpdateProject();
+  const { mutate: deleteProject } = useDeleteProject();
+  const { tasks } = useTaskContext();
   const navigate = useNavigate();
+
+  // State for inline editing
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingProjectId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingProjectId]);
+
+  const handleStartRename = (project: Project) => {
+    setEditingProjectId(project.id);
+    setEditingName(project.name);
+  };
+
+  const handleSaveRename = () => {
+    if (editingProjectId && editingName.trim()) {
+      updateProject({ id: editingProjectId, data: { name: editingName.trim() } });
+    }
+    setEditingProjectId(null);
+    setEditingName("");
+  };
+
+  const handleCancelRename = () => {
+    setEditingProjectId(null);
+    setEditingName("");
+  };
+
+  const handleColorChange = (projectId: string, color: string) => {
+    updateProject({ id: projectId, data: { color } });
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    deleteProject(projectId);
+    setDeleteConfirmId(null);
+    // If the deleted project was active, switch to "all"
+    if (activeProject === projectId) {
+      setActiveProject("all");
+    }
+  };
+
+  // Calculate today's task count (active tasks due today)
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayTaskCount = useMemo(() => {
+    return tasks.filter(
+      (task) => task.due_date && normalizeDate(task.due_date) === todayStr && task.status !== "completed"
+    ).length;
+  }, [tasks, todayStr]);
+
+  const topNavItems: NavItem[] = useMemo(
+    () => [
+      { id: "inbox", label: "Inbox", icon: <Inbox size={18} /> },
+      { id: "today", label: "Today", icon: <Sun size={18} />, badge: todayTaskCount || undefined },
+      { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} /> },
+      { id: "someday", label: "Someday", icon: <Archive size={18} /> },
+    ],
+    [todayTaskCount]
+  );
 
   return (
     <nav className="flex-1 flex flex-col py-3 overflow-y-auto">
@@ -56,7 +134,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             item={item}
             active={activeView === item.id}
             collapsed={collapsed}
-            onClick={() => setActiveView(item.id)}
+            onClick={() => {
+              setActiveView(item.id);
+              setActiveProject("all");
+              navigate({ to: "/app" });
+            }}
           />
         ))}
       </div>
@@ -89,30 +171,113 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         </div>
 
         {projects.map((project) => (
-          <button
+          <div
             key={project.id}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors",
-              !collapsed
-                ? "px-2.5 py-2 hover:bg-bone/60"
-                : "px-0 py-2 justify-center hover:bg-bone/60"
+              "group w-full flex items-center gap-2.5 rounded-[8px] transition-colors",
+              !collapsed ? "px-2.5 py-2" : "px-0 py-2 justify-center",
+              activeProject === project.id
+                ? "bg-ember/8 text-ember font-medium"
+                : "hover:bg-bone/60"
             )}
           >
-            <div
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: project.color }}
-            />
-            {!collapsed && (
+            {editingProjectId === project.id ? (
               <>
-                <span className="text-sm text-ink-light truncate sidebar-label">
-                  {project.name}
-                </span>
-                <span className="ml-auto text-xs text-clay sidebar-label">
-                  {project.taskCount}
-                </span>
+                <div
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: project.color }}
+                />
+                {!collapsed && (
+                  <input
+                    ref={editInputRef}
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveRename();
+                      if (e.key === "Escape") handleCancelRename();
+                    }}
+                    onBlur={handleSaveRename}
+                    className="flex-1 text-sm bg-white border border-ember/30 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-ember/20"
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setActiveProject(project.id);
+                    setActiveView("inbox");
+                    navigate({ to: "/app" });
+                  }}
+                  className="flex items-center gap-2.5 flex-1 min-w-0"
+                >
+                  <div
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  {!collapsed && (
+                    <span className="text-sm truncate sidebar-label text-left">
+                      {project.name}
+                    </span>
+                  )}
+                </button>
+                {!collapsed && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-0.5 rounded opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-bone transition-opacity"
+                      >
+                        <MoreHorizontal size={14} className="text-clay" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 bg-white">
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Palette size={14} className="text-clay" />
+                          <span>Change Color</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-white">
+                          <ColorPicker
+                            value={project.color}
+                            onChange={(color) => handleColorChange(project.id, color)}
+                          />
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={() => handleStartRename(project)}>
+                        <Pencil size={14} className="text-clay" />
+                        <span>Rename</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {deleteConfirmId === project.id ? (
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 size={14} />
+                          <span>Confirm Delete</span>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setDeleteConfirmId(project.id);
+                          }}
+                          disabled={project.is_default}
+                          className={cn(
+                            !project.is_default && "text-red-600 focus:text-red-600"
+                          )}
+                        >
+                          <Trash2 size={14} />
+                          <span>{project.is_default ? "Default (cannot delete)" : "Delete"}</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </>
             )}
-          </button>
+          </div>
         ))}
       </div>
 
@@ -248,15 +413,24 @@ function SidebarItem({
   collapsed: boolean;
   onClick: () => void;
 }) {
+  // Make certain items drop targets for task scheduling
+  const isDropTarget = ["today", "someday"].includes(item.id);
+  const { setNodeRef, isOver } = useDroppable({
+    id: `sidebar-${item.id}`,
+    disabled: !isDropTarget,
+  });
+
   const button = (
     <button
+      ref={isDropTarget ? setNodeRef : undefined}
       onClick={onClick}
       className={cn(
         "w-full flex items-center gap-2.5 rounded-[8px] transition-[color,background-color,font-weight] duration-150",
         collapsed ? "px-0 py-2.5 justify-center" : "px-2.5 py-2",
         active
           ? "bg-ember/8 text-ember font-medium"
-          : "text-ink-muted hover:bg-bone/60 hover:text-ink-light"
+          : "text-ink-muted hover:bg-bone/60 hover:text-ink-light",
+        isOver && "bg-ember/15 ring-2 ring-ember/30"
       )}
     >
       <span className="flex-shrink-0">{item.icon}</span>

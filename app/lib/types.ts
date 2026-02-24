@@ -36,6 +36,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
   due_date: string | null;
+  is_someday: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -95,6 +96,7 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   due_date?: string | null;
+  is_someday?: boolean;
   sort_order?: number;
 }
 
@@ -104,6 +106,7 @@ export interface UpdateTaskInput {
   status?: TaskStatus;
   project_id?: string;
   due_date?: string | null;
+  is_someday?: boolean;
   sort_order?: number;
 }
 

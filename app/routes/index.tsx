@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef } from "react";
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,12 @@ import {
   LayoutList,
   Bell,
   ArrowRight,
-  Check,
   Sparkles,
   MoveRight,
 } from "lucide-react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap-config";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { DemoAppPreview } from "@/components/landing/demo-app-preview";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -31,12 +34,101 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const appPreviewRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  // GSAP animations
+  useGSAP(() => {
+    // Skip animations if user prefers reduced motion
+    if (reducedMotion) {
+      return;
+    }
+
+    // Hero content staggered reveal timeline
+    const heroTimeline = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+    heroTimeline
+      .fromTo(".hero-badge",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6 })
+      .fromTo(".hero-headline",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8 }, "-=0.4")
+      .fromTo(".hero-highlight",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6 }, "-=0.3")
+      .fromTo(".hero-subheadline",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6 }, "-=0.4")
+      .fromTo(".hero-ctas",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5 }, "-=0.3")
+      .fromTo(".hero-trust",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(".app-preview",
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.8 }, "-=0.3");
+
+    // Feature cards scroll-triggered reveal
+    ScrollTrigger.batch(".feature-card", {
+      onEnter: (elements) => {
+        gsap.fromTo(elements,
+          { opacity: 0, y: 40 },
+          { opacity: 1, y: 0, stagger: 0.15, duration: 0.8, ease: "expo.out" }
+        );
+      },
+      start: "top 85%",
+      once: true,
+    });
+
+    // Step cards scroll-triggered animation
+    ScrollTrigger.batch(".step-card", {
+      onEnter: (elements) => {
+        gsap.fromTo(elements,
+          { opacity: 0, x: -30 },
+          { opacity: 1, x: 0, stagger: 0.2, duration: 0.7, ease: "expo.out" }
+        );
+      },
+      start: "top 80%",
+      once: true,
+    });
+
+    // Step numbers scale animation
+    gsap.utils.toArray(".step-number").forEach((el) => {
+      ScrollTrigger.create({
+        trigger: el as Element,
+        start: "top 85%",
+        onEnter: () => {
+          gsap.fromTo(el as Element,
+            { scale: 0.5, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(2)" }
+          );
+        },
+        once: true,
+      });
+    });
+
+    // CTA section glow pulse
+    gsap.to(".cta-glow", {
+      opacity: 0.25,
+      scale: 1.1,
+      duration: 3,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+
+  }, { scope: containerRef });
+
   return (
-    <div className="min-h-screen bg-surface">
+    <div ref={containerRef} className="min-h-screen bg-surface">
       <Navbar />
 
       {/* ─── HERO SECTION ─── */}
-      <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden">
+      <section ref={heroRef} className="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-[40%] -right-[20%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-ember/[0.04] to-amber/[0.06] blur-3xl" />
@@ -46,7 +138,7 @@ function LandingPage() {
         <div className="relative max-w-[1200px] mx-auto px-6">
           <div className="max-w-[720px] mx-auto text-center">
             {/* Pill badge */}
-            <div className="animate-fade-up">
+            <div className="hero-badge">
               <Badge variant="coming" className="mb-8 py-1.5 px-4 text-[0.8125rem]">
                 <Sparkles size={14} className="mr-1.5" />
                 Now in early access
@@ -54,25 +146,25 @@ function LandingPage() {
             </div>
 
             {/* Headline */}
-            <h1 className="animate-fade-up delay-1 font-display text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.02em] font-bold text-ink mb-6">
+            <h1 className="hero-headline font-display text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.02em] font-bold text-ink mb-6">
               Your tasks,{" "}
               <span className="relative">
                 <span className="relative z-10">beautifully</span>
-                <span className="absolute bottom-[0.1em] left-0 right-0 h-[0.3em] bg-ember/15 -rotate-[0.5deg] rounded-sm" />
+                <span className="hero-highlight absolute bottom-[0.1em] left-0 right-0 h-[0.3em] bg-ember/15 -rotate-[0.5deg] rounded-sm" />
               </span>
               <br />
               organized
             </h1>
 
             {/* Subheadline */}
-            <p className="animate-fade-up delay-2 text-lg md:text-xl text-ink-muted leading-relaxed mb-10 max-w-[540px] mx-auto">
+            <p className="hero-subheadline text-lg md:text-xl text-ink-muted leading-relaxed mb-10 max-w-[540px] mx-auto">
               A minimal task manager for people who value focus. Plan your day,
               see your week at a glance, and get things done — without the
               clutter.
             </p>
 
             {/* CTAs */}
-            <div className="animate-fade-up delay-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="hero-ctas flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button variant="primary" size="xl" asChild>
                 <Link to="/sign-up">
                   Get Started Free
@@ -85,115 +177,14 @@ function LandingPage() {
             </div>
 
             {/* Trust line */}
-            <p className="animate-fade-up delay-4 mt-6 text-xs text-clay">
+            <p className="hero-trust mt-6 text-xs text-clay">
               Free forever &middot; No credit card required
             </p>
           </div>
 
           {/* ─── APP PREVIEW ─── */}
-          <div className="animate-fade-up delay-5 mt-16 md:mt-24 relative">
-            <div className="relative rounded-[20px] border border-border bg-surface-raised shadow-xl overflow-hidden">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border-subtle bg-bone/50">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-clay-light" />
-                  <div className="w-3 h-3 rounded-full bg-clay-light" />
-                  <div className="w-3 h-3 rounded-full bg-clay-light" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="bg-bone rounded-[8px] px-4 py-1 text-xs text-clay max-w-[280px] w-full text-center">
-                    app.marrowtasker.com
-                  </div>
-                </div>
-                <div className="w-[54px]" />
-              </div>
-
-              {/* App mockup */}
-              <div className="p-1">
-                <div className="flex min-h-[420px]">
-                  {/* Sidebar mock */}
-                  <div className="hidden md:flex flex-col w-[200px] border-r border-border-subtle p-4 gap-1.5">
-                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] bg-ember/8 text-ember">
-                      <div className="w-4 h-4 rounded-full bg-ember/20" />
-                      <span className="text-sm font-medium">Today</span>
-                      <span className="ml-auto text-xs bg-ember/10 rounded-full px-1.5 py-0.5">3</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-ink-muted hover:bg-bone/60">
-                      <div className="w-4 h-4 rounded-full bg-sky/20" />
-                      <span className="text-sm">Upcoming</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-ink-muted hover:bg-bone/60">
-                      <div className="w-4 h-4 rounded-full bg-clay-light" />
-                      <span className="text-sm">Someday</span>
-                    </div>
-                    <div className="my-3 h-px bg-border-subtle" />
-                    <div className="text-[10px] font-semibold tracking-wider uppercase text-clay px-2.5 mb-1">Projects</div>
-                    <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-ink-muted hover:bg-bone/60">
-                      <div className="w-2.5 h-2.5 rounded-full bg-ember" />
-                      <span className="text-sm">Personal</span>
-                    </div>
-                  </div>
-
-                  {/* Main content mock */}
-                  <div className="flex-1 p-6 space-y-4">
-                    {/* Add task bar */}
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-[12px] border border-dashed border-clay-light text-clay">
-                      <div className="w-5 h-5 rounded-full border-2 border-clay-light" />
-                      <span className="text-sm">Add a task&#8230;</span>
-                    </div>
-
-                    {/* Task items */}
-                    <div className="space-y-1">
-                      <MockTaskItem
-                        name="Review quarterly goals"
-                        badge="Today"
-                        badgeColor="sky"
-                        hasChecklist="1/4"
-                      />
-                      <MockTaskItem
-                        name="Buy groceries for the week"
-                        badge="Today"
-                        badgeColor="sky"
-                      />
-                      <MockTaskItem
-                        name="Reply to Sarah's email"
-                        badge="Overdue"
-                        badgeColor="destructive"
-                      />
-                      <MockTaskItem
-                        name="Update portfolio website bio"
-                        completed
-                      />
-                    </div>
-
-                    {/* Weekly preview */}
-                    <div className="mt-6 pt-4 border-t border-border-subtle">
-                      <div className="text-xs font-semibold tracking-wider uppercase text-clay mb-3">
-                        This Week
-                      </div>
-                      <div className="grid grid-cols-7 gap-1.5">
-                        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                          <div
-                            key={i}
-                            className={`text-center py-2 rounded-[8px] text-xs ${
-                              i === 1
-                                ? "bg-ember/8 text-ember font-semibold"
-                                : "text-clay"
-                            }`}
-                          >
-                            {d}
-                            {(i === 2 || i === 3 || i === 5) && (
-                              <div className="mt-1.5 mx-auto w-1.5 h-1.5 rounded-full bg-ink/20" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          <div ref={appPreviewRef} className="app-preview mt-16 md:mt-24 relative">
+            <DemoAppPreview />
             {/* Decorative glow behind preview */}
             <div className="absolute -inset-4 -z-10 rounded-[28px] bg-gradient-to-b from-ember/[0.03] to-transparent blur-2xl" />
           </div>
@@ -285,7 +276,7 @@ function LandingPage() {
         {/* Background */}
         <div className="absolute inset-0 bg-ink" />
         <div className="absolute inset-0 grain opacity-30" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-ember/20 to-transparent rounded-full blur-3xl" />
+        <div className="cta-glow absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-ember/20 to-transparent rounded-full blur-3xl" />
 
         <div className="relative max-w-[600px] mx-auto px-6 text-center">
           <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-chalk mb-6">
@@ -316,75 +307,17 @@ function LandingPage() {
 
 /* ─── Sub-components ─── */
 
-function MockTaskItem({
-  name,
-  badge,
-  badgeColor,
-  completed,
-  hasChecklist,
-}: {
-  name: string;
-  badge?: string;
-  badgeColor?: string;
-  completed?: boolean;
-  hasChecklist?: string;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-4 py-2.5 rounded-[10px] transition-colors ${
-        completed ? "opacity-50" : "hover:bg-bone/60"
-      }`}
-    >
-      <div
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-          completed
-            ? "border-sage bg-sage"
-            : "border-clay-light hover:border-ember"
-        }`}
-      >
-        {completed && (
-          <Check size={12} className="text-white" strokeWidth={3} />
-        )}
-      </div>
-      <span
-        className={`text-sm flex-1 ${
-          completed ? "line-through text-ink-muted" : "text-ink"
-        }`}
-      >
-        {name}
-      </span>
-      {badge && (
-        <span
-          className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-            badgeColor === "destructive"
-              ? "bg-red-50 text-red-500"
-              : badgeColor === "sky"
-                ? "bg-sky/10 text-sky"
-                : "bg-bone text-ink-muted"
-          }`}
-        >
-          {badge}
-        </span>
-      )}
-      {hasChecklist && (
-        <span className="text-[10px] text-clay">{hasChecklist}</span>
-      )}
-    </div>
-  );
-}
-
 function FeatureCard({
   icon,
   title,
   description,
   color,
-  delay,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   color: string;
-  delay: number;
+  delay?: number;
 }) {
   const colorMap: Record<string, string> = {
     ember: "bg-ember/8 text-ember",
@@ -394,7 +327,7 @@ function FeatureCard({
   };
 
   return (
-    <div className={`group p-8 rounded-[20px] bg-surface-raised border border-border-subtle hover:border-border-strong hover:shadow-md transition-[border-color,box-shadow] duration-300`}>
+    <div className="feature-card group p-8 rounded-[20px] bg-surface-raised border border-border-subtle hover:border-border-strong hover:shadow-md transition-[border-color,box-shadow] duration-300">
       <div
         className={`w-12 h-12 rounded-[12px] ${colorMap[color]} flex items-center justify-center mb-5 transition-transform duration-200 group-hover:scale-110`}
       >
@@ -416,8 +349,8 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className="text-center md:text-left">
-      <div className="font-display text-6xl md:text-7xl font-bold text-bone-dark mb-4 select-none">
+    <div className="step-card text-center md:text-left">
+      <div className="step-number font-display text-6xl md:text-7xl font-bold text-bone-dark mb-4 select-none">
         {number}
       </div>
       <h3 className="text-xl font-semibold mb-2">{title}</h3>

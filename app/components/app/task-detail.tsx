@@ -4,6 +4,8 @@ import { useTaskContext } from "@/lib/task-context";
 import { DatePicker } from "@/components/app/date-picker";
 import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
 import { ProjectSelector } from "@/components/app/project-selector";
+import { useProjects } from "@/hooks/use-projects";
+import { useUserTier } from "@/hooks/use-user-tier";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +30,8 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
     toggleChecklistItem,
     deleteChecklistItem,
   } = useTaskContext();
+  const { data: projects = [] } = useProjects();
+  const { data: userTier = "free" } = useUserTier();
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -70,9 +74,9 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
     updateTask(task.id, { due_date: date });
   };
 
-  const handleProjectChange = (pid: string) => {
-    setProjectId(pid);
-    updateTask(task.id, { project_id: pid });
+  const handleProjectChange = (pid: string | null) => {
+    setProjectId(pid || "");
+    updateTask(task.id, { project_id: pid || undefined });
   };
 
   const handleDelete = () => {
@@ -159,7 +163,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
             aria-label="Task name"
             name="task-name"
             autoComplete="off"
-            className="w-full text-xl font-semibold text-ink bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md placeholder:text-clay"
+            className="w-full px-2 py-1.5 text-xl font-semibold text-ink bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md placeholder:text-clay"
             placeholder="Task name"
           />
 
@@ -167,18 +171,18 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           <textarea
             value={description}
             onChange={(e) => handleDescriptionChange(e.target.value)}
-            placeholder="Add a description\u2026"
+            placeholder="Add a description…"
             aria-label="Task description"
             name="task-description"
             rows={4}
-            className="w-full text-sm text-ink-light bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md resize-none leading-relaxed placeholder:text-clay"
+            className="w-full px-2 py-1.5 text-sm text-ink-light bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/30 rounded-md resize-none leading-relaxed placeholder:text-clay"
           />
 
           {/* Meta fields */}
           <div className="space-y-2">
             <DatePicker value={dueDate} onChange={handleDateChange} />
-            <ReminderSelector value={reminder} onChange={setReminder} />
-            <ProjectSelector value={projectId} onChange={handleProjectChange} />
+            <ReminderSelector value={reminder} onChange={setReminder} userTier={userTier} />
+            <ProjectSelector value={projectId} onChange={handleProjectChange} projects={projects} />
           </div>
 
           {/* Checklist */}
@@ -280,7 +284,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
                     }
                   }}
                   placeholder="Add an item..."
-                  className="flex-1 text-sm text-ink-light bg-transparent outline-none placeholder:text-clay"
+                  className="flex-1 text-sm text-ink-light bg-transparent outline-none placeholder:text-clay pl-2"
                 />
                 <button
                   onClick={handleAddChecklistItem}

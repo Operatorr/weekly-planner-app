@@ -9,12 +9,9 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import {
-  mockTasks as allTasks,
-  mockProjects as allProjects,
-  type Task,
-  type Project,
-} from "@/lib/mock-data";
+import { useTaskContext } from "@/lib/task-context";
+import { useProjects } from "@/hooks/use-projects";
+import type { Task } from "@/lib/types";
 import { CheckSquare, FolderOpen } from "lucide-react";
 
 interface QuickFindProps {
@@ -32,6 +29,8 @@ export function QuickFind({
 }: QuickFindProps) {
   const [query, setQuery] = useState("");
   const backdropRef = useRef<HTMLDivElement>(null);
+  const { tasks } = useTaskContext();
+  const { data: projects = [] } = useProjects();
 
   // Reset query when opening
   useEffect(() => {
@@ -54,50 +53,57 @@ export function QuickFind({
   // Fuse instances for fuzzy search
   const taskFuse = useMemo(
     () =>
-      new Fuse(allTasks, {
+      new Fuse(tasks, {
         keys: [
-          { name: "name", weight: 0.7 },
+          { name: "title", weight: 0.7 },
           { name: "description", weight: 0.3 },
         ],
         threshold: 0.4,
         includeScore: true,
       }),
-    []
+    [tasks]
   );
 
   const projectFuse = useMemo(
     () =>
-      new Fuse(allProjects, {
+      new Fuse(projects, {
         keys: ["name"],
         threshold: 0.3,
         includeScore: true,
       }),
-    []
+    [projects]
   );
 
   // Filtered results
   const taskResults = useMemo(() => {
-    if (!query.trim()) return allTasks.filter((t) => !t.completed).slice(0, 6);
-    return taskFuse.search(query).slice(0, 8).map((r) => r.item);
-  }, [query, taskFuse]);
+    if (!query.trim())
+      return tasks.filter((t) => t.status !== "completed").slice(0, 6);
+    return taskFuse
+      .search(query)
+      .slice(0, 8)
+      .map((r) => r.item);
+  }, [query, tasks, taskFuse]);
 
   const projectResults = useMemo(() => {
-    if (!query.trim()) return allProjects;
-    return projectFuse.search(query).slice(0, 4).map((r) => r.item);
-  }, [query, projectFuse]);
+    if (!query.trim()) return projects;
+    return projectFuse
+      .search(query)
+      .slice(0, 4)
+      .map((r) => r.item);
+  }, [query, projects, projectFuse]);
 
   const getProjectName = useCallback(
     (projectId: string) => {
-      return allProjects.find((p) => p.id === projectId)?.name || "";
+      return projects.find((p) => p.id === projectId)?.name || "";
     },
-    []
+    [projects]
   );
 
   const handleSelect = useCallback(
     (value: string) => {
       if (value.startsWith("task:")) {
         const taskId = value.replace("task:", "");
-        const task = allTasks.find((t) => t.id === taskId);
+        const task = tasks.find((t) => t.id === taskId);
         if (task) {
           onSelectTask(task);
           onClose();
@@ -108,7 +114,7 @@ export function QuickFind({
         onClose();
       }
     },
-    [onSelectTask, onSelectProject, onClose]
+    [tasks, onSelectTask, onSelectProject, onClose]
   );
 
   if (!open) return null;
@@ -154,20 +160,21 @@ export function QuickFind({
                         size={15}
                         className={cn(
                           "flex-shrink-0",
-                          task.completed ? "text-sage" : "text-clay"
+                          task.status === "completed" ? "text-sage" : "text-clay"
                         )}
                       />
                       <div className="flex-1 min-w-0">
                         <span
                           className={cn(
                             "block truncate text-sm",
-                            task.completed && "line-through text-ink-muted"
+                            task.status === "completed" &&
+                              "line-through text-ink-muted"
                           )}
                         >
-                          {task.name}
+                          {task.title}
                         </span>
                         <span className="block truncate text-xs text-clay">
-                          {getProjectName(task.projectId)}
+                          {getProjectName(task.project_id)}
                         </span>
                       </div>
                     </CommandItem>
@@ -187,10 +194,6 @@ export function QuickFind({
                       <div className="flex-1 min-w-0">
                         <span className="block truncate text-sm">
                           {project.name}
-                        </span>
-                        <span className="block truncate text-xs text-clay">
-                          {project.taskCount}{" "}
-                          {project.taskCount === 1 ? "task" : "tasks"}
                         </span>
                       </div>
                       <div

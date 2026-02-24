@@ -7,14 +7,26 @@ import { logActivity } from "../_lib/activity";
 import { checkFilterLimit } from "../_lib/tier";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
   try {
     const { userId } = await authenticateRequest(req);
-    const data = parseBody(req, createFilterViewSchema);
     const sql = neon(process.env.DATABASE_URL!);
+
+    // GET - Fetch all saved filters for user
+    if (req.method === "GET") {
+      const rows = await sql`
+        SELECT * FROM filter_views
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+      `;
+      return res.status(200).json(rows);
+    }
+
+    // POST - Create new filter
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    const data = parseBody(req, createFilterViewSchema);
 
     // Enforce tier limit
     const canCreate = await checkFilterLimit(userId);

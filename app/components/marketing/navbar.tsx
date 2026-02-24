@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
@@ -9,12 +9,34 @@ export function Navbar() {
   const { isSignedIn } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const scrollToFeatures = () => {
+    const isHomePage = window.location.pathname === "/";
+    if (isHomePage) {
+      document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate({ to: "/" }).then(() => {
+        setTimeout(() => {
+          document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      });
+    }
+  };
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    const isHomePage = window.location.pathname === "/";
+    if (isHomePage) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <header
@@ -27,7 +49,7 @@ export function Navbar() {
     >
       <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to="/" onClick={handleLogoClick} className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-[8px] bg-ember flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path
@@ -46,12 +68,13 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          <a
-            href="#features"
+          <button
+            type="button"
+            onClick={scrollToFeatures}
             className="text-sm text-ink-muted hover:text-ink transition-colors"
           >
             Features
-          </a>
+          </button>
           <Link
             to="/pricing"
             className="text-sm text-ink-muted hover:text-ink transition-colors"
@@ -92,13 +115,16 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden glass border-t border-border-subtle animate-fade-in">
           <div className="px-6 py-4 space-y-4">
-            <a
-              href="#features"
-              className="block text-sm text-ink-muted hover:text-ink"
-              onClick={() => setMobileOpen(false)}
+            <button
+              type="button"
+              className="block text-sm text-ink-muted hover:text-ink text-left"
+              onClick={() => {
+                setMobileOpen(false);
+                scrollToFeatures();
+              }}
             >
               Features
-            </a>
+            </button>
             <Link
               to="/pricing"
               className="block text-sm text-ink-muted hover:text-ink"

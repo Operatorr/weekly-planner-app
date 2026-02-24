@@ -4,6 +4,7 @@ import { authenticateRequest } from "../_lib/auth";
 import { parseBody, handleError } from "../_lib/validate";
 import { setReminderSchema } from "../_lib/schemas";
 import { logActivity } from "../_lib/activity";
+import { getUserTier } from "../_lib/tier";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -14,6 +15,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { userId } = await authenticateRequest(req);
     const data = parseBody(req, setReminderSchema);
     const sql = neon(process.env.DATABASE_URL!);
+
+    // Check if user is on Pro tier (reminders are a Pro feature)
+    const tier = await getUserTier(userId);
+    if (tier === "free") {
+      return res.status(403).json({
+        error: "Pro feature",
+        message: "Reminders are available on Pro plans. Upgrade to set reminders.",
+      });
+    }
 
     // Verify the task belongs to the user
     const tasks = await sql`

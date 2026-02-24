@@ -24,3 +24,4 @@ pnpm-debug.log*
 
 # Cache
 pnpm-lock.yaml
+.vercel

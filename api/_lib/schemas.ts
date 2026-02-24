@@ -5,8 +5,9 @@ import { z } from "zod";
 export const createTaskSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(5000).optional(),
-  project_id: z.string().uuid(),
+  project_id: z.string().uuid().optional().nullable(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  is_someday: z.boolean().optional(),
   sort_order: z.number().optional(),
 });
 
@@ -15,6 +16,7 @@ export const updateTaskSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   project_id: z.string().uuid().optional(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  is_someday: z.boolean().optional(),
   sort_order: z.number().optional(),
 });
 

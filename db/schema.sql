@@ -31,12 +31,13 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS tasks (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  project_id    UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  project_id    UUID REFERENCES projects(id) ON DELETE SET NULL,
   title         TEXT NOT NULL,
   description   TEXT NOT NULL DEFAULT '',
   status        TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'completed')),
   due_date      DATE,
+  is_someday    BOOLEAN NOT NULL DEFAULT false,
   sort_order    REAL NOT NULL DEFAULT 0,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -80,9 +81,9 @@ CREATE TABLE IF NOT EXISTS activity_log (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   action      TEXT NOT NULL
-    CHECK (action IN ('created', 'completed', 'edited', 'deleted')),
+    CHECK (action IN ('created', 'updated', 'completed', 'uncompleted', 'deleted')),
   entity_type TEXT NOT NULL
-    CHECK (entity_type IN ('task', 'project')),
+    CHECK (entity_type IN ('task', 'project', 'checklist_item', 'reminder', 'filter_view')),
   entity_id   UUID NOT NULL,
   details     JSONB NOT NULL DEFAULT '{}',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -95,7 +96,10 @@ CREATE INDEX IF NOT EXISTS idx_tasks_user_id        ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_project_id     ON tasks(project_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date       ON tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_status         ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_is_someday     ON tasks(is_someday);
 CREATE INDEX IF NOT EXISTS idx_tasks_created_at     ON tasks(created_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_completed_cleanup ON tasks(user_id, status, completed_at)
+  WHERE status = 'completed';
 
 CREATE INDEX IF NOT EXISTS idx_checklist_task_id    ON checklist_items(task_id);
 
