@@ -7,6 +7,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -48,6 +49,7 @@ function RootComponent() {
           }}
         />
       </QueryClientProvider>
+      <Analytics />
     </ClerkProvider>
   );
 }
