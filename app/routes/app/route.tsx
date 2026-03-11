@@ -7,7 +7,9 @@ import { AppSidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/header";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { QuickFind } from "@/components/app/quick-find";
+import { TaskDetail } from "@/components/app/task-detail";
 import { FilterPanel, type FilterConfig } from "@/components/app/filter-panel";
+import type { Task } from "@/lib/types";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
@@ -80,6 +82,7 @@ function AppLayout() {
   const [activeProject, setActiveProject] = useState("all");
   const [activeView, setActiveView] = useState("today");
   const [quickFindOpen, setQuickFindOpen] = useState(false);
+  const [quickFindTask, setQuickFindTask] = useState<Task | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterConfig>({});
 
@@ -112,8 +115,8 @@ function AppLayout() {
     return () => window.removeEventListener("marrow:quick-find", handler);
   }, []);
 
-  const handleSelectTask = useCallback((_task: unknown) => {
-    // TODO: wire to open task detail sheet
+  const handleSelectTask = useCallback((task: Task) => {
+    setQuickFindTask(task);
   }, []);
 
   const handleSelectProject = useCallback(
@@ -223,6 +226,14 @@ function AppLayout() {
             onSelectTask={handleSelectTask}
             onSelectProject={handleSelectProject}
           />
+
+          {/* Task Detail from Quick Find */}
+          {quickFindTask && (
+            <TaskDetail
+              task={quickFindTask}
+              onClose={() => setQuickFindTask(null)}
+            />
+          )}
 
           {/* Filter Panel */}
           <FilterPanel

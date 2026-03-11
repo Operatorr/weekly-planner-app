@@ -142,6 +142,7 @@ export function QuickFind({
               placeholder="Search tasks and projects..."
               value={query}
               onValueChange={setQuery}
+              autoFocus
             />
             <CommandList>
               <CommandEmpty>

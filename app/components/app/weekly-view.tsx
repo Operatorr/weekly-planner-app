@@ -92,7 +92,7 @@ function DayColumn({
       {/* Day header */}
       <div
         className={cn(
-          "px-2.5 py-2 text-center border-b",
+          "px-2.5 py-2 flex flex-col items-center text-center border-b",
           day.isToday ? "border-ember/10" : "border-border-subtle/60"
         )}
       >

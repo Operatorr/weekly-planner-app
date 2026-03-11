@@ -446,6 +446,10 @@ body {
   border-radius: var(--radius-sm);
 }
 
+[cmdk-input-wrapper] input:focus-visible {
+  outline: none;
+}
+
 /* ─── Reduced Motion ─── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

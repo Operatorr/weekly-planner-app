@@ -354,7 +354,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           <span className="text-xs text-clay">
             Created{" "}
             {task.created_at
-              ? new Date(task.created_at + "T12:00:00").toLocaleDateString("en-US", {
+              ? new Date(task.created_at).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                 })

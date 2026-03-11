@@ -111,7 +111,7 @@ export function AppHeader() {
           <TooltipTrigger asChild>
             <button
               onClick={handleQuickFind}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[8px] bg-bone hover:bg-bone-dark transition-colors text-ink-muted hover:text-ink-light cursor-pointer"
+              className="flex items-center gap-2 pl-4 pr-3 py-1.5 rounded-[8px] bg-bone hover:bg-bone-dark transition-colors text-ink-muted hover:text-ink-light cursor-pointer"
             >
               <Search size={14} />
               <span className="text-xs hidden sm:inline">Quick Find</span>

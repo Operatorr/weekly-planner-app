@@ -312,6 +312,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const updateTask = useCallback(
     (id: string, updates: Partial<Task>) => {
+      if (id.startsWith("optimistic-")) return;
       updateMutation.mutate({ id, updates });
     },
     [updateMutation]
@@ -356,6 +357,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const completeTask = useCallback(
     (id: string) => {
+      if (id.startsWith("optimistic-")) return;
       const task = tasks.find((t) => t.id === id);
       completeMutation.mutate({ id, completed: true });
 
@@ -375,6 +377,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const uncompleteTask = useCallback(
     (id: string) => {
+      if (id.startsWith("optimistic-")) return;
       completeMutation.mutate({ id, completed: false });
     },
     [completeMutation]
@@ -408,6 +411,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const deleteTask = useCallback(
     (id: string) => {
+      if (id.startsWith("optimistic-")) return;
       const task = tasks.find((t) => t.id === id);
       deleteMutation.mutate(id);
 
@@ -525,6 +529,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const addChecklistItem = useCallback(
     (taskId: string, title: string) => {
+      if (taskId.startsWith("optimistic-")) return;
       const optimisticId = `optimistic-${Date.now()}`;
       addChecklistMutation.mutate({ taskId, title, optimisticId });
     },

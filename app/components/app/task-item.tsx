@@ -86,7 +86,13 @@ export function TaskItem({
 
   const handleCheck = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (task.status === "completed") return;
+    if (task.status === "completed") {
+      if (settings.soundOnComplete) {
+        playTaskCompleteSound();
+      }
+      onToggle?.(task.id);
+      return;
+    }
     setCompleting(true);
 
     if (settings.soundOnComplete) {
@@ -156,7 +162,7 @@ export function TaskItem({
         }
       }}
       className={cn(
-        "task-item group flex items-start gap-3 px-4 py-2.5 rounded-[12px] cursor-pointer select-none w-full text-left relative",
+        "task-item group flex items-center gap-3 px-4 py-2.5 rounded-[12px] cursor-pointer select-none w-full text-left relative",
         !isDragging && "transition-colors duration-200",
         completing && "opacity-50",
         isDragging && "bg-surface-raised",
@@ -238,7 +244,7 @@ export function TaskItem({
         </div>
 
         {/* Metadata row */}
-        {!compact && (
+        {!compact && (task.is_someday || (task.due_date && dateBadgeVariant) || checklistProgress || (showProject && project)) && (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {task.is_someday && (
               <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-clay/10 text-clay">
