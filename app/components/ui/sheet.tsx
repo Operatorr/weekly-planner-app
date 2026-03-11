@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "sheet-overlay fixed inset-0 z-50 bg-black/50",
       className
     )}
     {...props}
@@ -26,23 +27,26 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const SheetContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    side?: "top" | "bottom" | "left" | "right";
+    side?: "left" | "right";
+    title?: string;
   }
->(({ side = "left", className, children, ...props }, ref) => (
+>(({ side = "left", className, children, title = "Menu", ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      aria-describedby={undefined}
       className={cn(
-        "fixed z-50 bg-surface-raised shadow-lg transition-transform duration-300 ease-in-out",
-        side === "left" &&
-          "inset-y-0 left-0 h-full w-[280px] border-r border-border-subtle data-[state=open]:translate-x-0 data-[state=closed]:-translate-x-full",
-        side === "right" &&
-          "inset-y-0 right-0 h-full w-[280px] border-l border-border-subtle data-[state=open]:translate-x-0 data-[state=closed]:translate-x-full",
+        "fixed z-50 bg-surface-raised shadow-lg",
+        side === "left" && "sheet-panel-left inset-y-0 left-0 h-full w-[280px] border-r border-border-subtle",
+        side === "right" && "sheet-panel-right inset-y-0 right-0 h-full w-[280px] border-l border-border-subtle",
         className
       )}
       {...props}
     >
+      <VisuallyHidden>
+        <DialogPrimitive.Title>{title}</DialogPrimitive.Title>
+      </VisuallyHidden>
       {children}
       <DialogPrimitive.Close className="absolute right-3 top-3 rounded-[6px] p-1 text-ink-muted hover:text-ink hover:bg-bone transition-colors">
         <X size={16} />

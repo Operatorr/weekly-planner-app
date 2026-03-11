@@ -349,6 +349,51 @@ body {
   animation: slideInDown 0.35s var(--ease-out-expo) both;
 }
 
+/* ─── Sheet / Drawer Animations ─── */
+@keyframes sheetSlideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheetSlideOutToLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes sheetSlideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheetSlideOutToRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes sheetOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheetOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.sheet-overlay[data-state="open"] {
+  animation: sheetOverlayIn 0.3s ease both;
+}
+.sheet-overlay[data-state="closed"] {
+  animation: sheetOverlayOut 0.2s ease both;
+}
+.sheet-panel-left[data-state="open"] {
+  animation: sheetSlideInFromLeft 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.sheet-panel-left[data-state="closed"] {
+  animation: sheetSlideOutToLeft 0.2s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.sheet-panel-right[data-state="open"] {
+  animation: sheetSlideInFromRight 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.sheet-panel-right[data-state="closed"] {
+  animation: sheetSlideOutToRight 0.2s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 .animate-task-fade-out {
   animation: taskFadeOut 0.5s var(--ease-out-expo) forwards;
   overflow: hidden;

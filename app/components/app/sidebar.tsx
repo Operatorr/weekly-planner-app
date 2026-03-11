@@ -20,7 +20,7 @@ import {
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useProjects, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskContext, normalizeDate } from "@/lib/task-context";
 import { useDroppable } from "@dnd-kit/core";
@@ -57,6 +57,7 @@ const bottomNavItems: NavItem[] = [
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen, activeFilter, setActiveFilter } = useAppContext();
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const createProject = useCreateProject();
   const { mutate: updateProject } = useUpdateProject();
   const { mutate: deleteProject } = useDeleteProject();
   const { tasks } = useTaskContext();
@@ -68,6 +69,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  // State for inline creation
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const newProjectInputRef = useRef<HTMLInputElement>(null);
+
   // Focus input when editing starts
   useEffect(() => {
     if (editingProjectId && editInputRef.current) {
@@ -75,6 +81,13 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       editInputRef.current.select();
     }
   }, [editingProjectId]);
+
+  // Focus input when creating starts
+  useEffect(() => {
+    if (isCreatingProject && newProjectInputRef.current) {
+      newProjectInputRef.current.focus();
+    }
+  }, [isCreatingProject]);
 
   const handleStartRename = (project: Project) => {
     setEditingProjectId(project.id);
@@ -163,7 +176,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           )}
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="w-5 h-5 rounded-[4px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors">
+              <button
+                onClick={() => setIsCreatingProject(true)}
+                className="w-5 h-5 rounded-[4px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
+              >
                 <Plus size={14} />
               </button>
             </TooltipTrigger>
@@ -223,7 +239,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     setActiveView("inbox");
                     navigate({ to: "/app" });
                   }}
-                  className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                  className={cn(
+                    "flex items-center cursor-pointer",
+                    collapsed ? "justify-center" : "gap-2.5 flex-1 min-w-0"
+                  )}
                 >
                   <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -293,6 +312,47 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             )}
           </div>
         ))}
+
+        {isCreatingProject && (
+          <div
+            className={cn(
+              "flex items-center gap-2.5 rounded-[8px]",
+              !collapsed ? "px-2.5 py-2" : "px-0 py-2 justify-center"
+            )}
+          >
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: "#6B7280" }}
+            />
+            {!collapsed && (
+              <input
+                ref={newProjectInputRef}
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newProjectName.trim()) {
+                    createProject.mutate({ name: newProjectName.trim() });
+                    setIsCreatingProject(false);
+                    setNewProjectName("");
+                  }
+                  if (e.key === "Escape") {
+                    setIsCreatingProject(false);
+                    setNewProjectName("");
+                  }
+                }}
+                onBlur={() => {
+                  if (newProjectName.trim()) {
+                    createProject.mutate({ name: newProjectName.trim() });
+                  }
+                  setIsCreatingProject(false);
+                  setNewProjectName("");
+                }}
+                placeholder="Project name"
+                className="flex-1 text-sm bg-white border border-ember/30 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-ember/20"
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-4 my-3">
@@ -430,7 +490,24 @@ export function AppSidebar() {
 
       {/* Mobile sidebar drawer */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0 pt-10">
+        <SheetContent side="left" className="p-0">
+          {/* DoMarrow logo - aligned with close button */}
+          <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+            <div className="w-6 h-6 rounded-[6px] bg-ember flex items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 18 18" fill="none">
+                <path
+                  d="M3 9L7.5 13.5L15 4.5"
+                  stroke="white"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="font-display text-base font-semibold tracking-tight text-ink">
+              DoMarrow
+            </span>
+          </div>
           <SidebarContent collapsed={false} />
         </SheetContent>
       </Sheet>
