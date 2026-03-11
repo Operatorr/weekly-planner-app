@@ -66,3 +66,20 @@ export async function cleanupOldCompletedTasks(userId: string): Promise<number> 
 
   return result.length;
 }
+
+export async function cleanupOldActivity(userId: string): Promise<number> {
+  const sql = getDb();
+  const tier = await getUserTier(userId);
+  const cutoff = getActivityCutoff(tier);
+
+  if (cutoff === null) return 0;
+
+  const result = await sql`
+    DELETE FROM activity_log
+    WHERE user_id = ${userId}
+      AND created_at < ${cutoff.toISOString()}
+    RETURNING id
+  `;
+
+  return result.length;
+}

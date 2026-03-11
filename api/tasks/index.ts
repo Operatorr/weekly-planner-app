@@ -4,7 +4,7 @@ import { authenticateRequest } from "../_lib/auth";
 import { parseBody, handleError } from "../_lib/validate";
 import { createTaskSchema } from "../_lib/schemas";
 import { logActivity } from "../_lib/activity";
-import { cleanupOldCompletedTasks } from "../_lib/tier";
+import { cleanupOldCompletedTasks, cleanupOldActivity } from "../_lib/tier";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -15,6 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === "GET") {
       // Cleanup old completed tasks for free users (>7 days)
       await cleanupOldCompletedTasks(userId);
+      await cleanupOldActivity(userId);
 
       const rows = await sql`
         SELECT * FROM tasks
