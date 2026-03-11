@@ -7,13 +7,15 @@ import { AppSidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/header";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { QuickFind } from "@/components/app/quick-find";
-import { FilterPanel, initialSavedFilters, type SavedFilter, type FilterConfig } from "@/components/app/filter-panel";
+import { FilterPanel, type FilterConfig } from "@/components/app/filter-panel";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
 import { ProjectProvider } from "@/lib/project-context";
 import { SettingsProvider } from "@/lib/settings-context";
+import { useFilters, useCreateFilter, useUpdateFilter, useDeleteFilter } from "@/hooks/use-filters";
+import { useUserTier } from "@/hooks/use-user-tier";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -80,8 +82,14 @@ function AppLayout() {
   const [activeView, setActiveView] = useState("today");
   const [quickFindOpen, setQuickFindOpen] = useState(false);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(initialSavedFilters);
   const [activeFilter, setActiveFilter] = useState<FilterConfig>({});
+
+  // Real filter data from API
+  const { data: savedFilters = [] } = useFilters();
+  const createFilterMutation = useCreateFilter();
+  const updateFilterMutation = useUpdateFilter();
+  const deleteFilterMutation = useDeleteFilter();
+  const { data: userTier = "free" } = useUserTier();
 
   // Provision user on first sign-in
   useProvisionUser();
@@ -122,23 +130,27 @@ function AppLayout() {
 
   const handleSaveFilter = useCallback(
     (name: string, config: FilterConfig) => {
-      const newFilter: SavedFilter = {
-        id: `f${Date.now()}`,
-        name,
-        config,
-        createdAt: new Date().toISOString(),
-      };
-      setSavedFilters((prev) => [...prev, newFilter]);
+      createFilterMutation.mutate({ name, config });
     },
-    []
+    [createFilterMutation]
   );
 
-  const handleDeleteFilter = useCallback((id: string) => {
-    setSavedFilters((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+  const handleUpdateFilter = useCallback(
+    (id: string, name: string, config: FilterConfig) => {
+      updateFilterMutation.mutate({ id, name, config });
+    },
+    [updateFilterMutation]
+  );
+
+  const handleDeleteFilter = useCallback(
+    (id: string) => {
+      deleteFilterMutation.mutate(id);
+    },
+    [deleteFilterMutation]
+  );
 
   const handleApplySavedFilter = useCallback(
-    (filter: SavedFilter) => {
+    (filter: { config: FilterConfig }) => {
       setActiveFilter(filter.config);
       setFilterPanelOpen(false);
     },
@@ -186,6 +198,8 @@ function AppLayout() {
             filterPanelOpen,
             setFilterPanelOpen,
             savedFilters,
+            activeFilter,
+            setActiveFilter,
           }}
         >
           <div className="h-screen flex flex-col bg-surface overflow-hidden">
@@ -219,10 +233,13 @@ function AppLayout() {
             open={filterPanelOpen}
             onClose={() => setFilterPanelOpen(false)}
             onApplyFilter={handleApplyFilter}
+            activeFilter={activeFilter}
             savedFilters={savedFilters}
             onSaveFilter={handleSaveFilter}
+            onUpdateFilter={handleUpdateFilter}
             onDeleteFilter={handleDeleteFilter}
             onApplySavedFilter={handleApplySavedFilter}
+            userTier={userTier}
           />
         </AppContext.Provider>
       </TaskProvider>

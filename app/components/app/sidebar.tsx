@@ -55,7 +55,7 @@ const bottomNavItems: NavItem[] = [
 ];
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
-  const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen } = useAppContext();
+  const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen, activeFilter, setActiveFilter } = useAppContext();
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { mutate: updateProject } = useUpdateProject();
   const { mutate: deleteProject } = useDeleteProject();
@@ -325,24 +325,44 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           </Tooltip>
         </div>
 
-        {savedFilters.map((filter) => (
-          <button
-            key={filter.id}
-            className={cn(
-              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-ink-muted cursor-pointer",
-              !collapsed
-                ? "px-2.5 py-2 hover:bg-bone/60"
-                : "px-0 py-2 justify-center hover:bg-bone/60"
-            )}
-          >
-            <Filter size={16} className="flex-shrink-0" />
-            {!collapsed && (
-              <span className="text-sm sidebar-label">{filter.name}</span>
-            )}
-          </button>
-        ))}
+        {savedFilters.map((filter) => {
+          const isActive =
+            activeFilter.status === filter.config.status &&
+            activeFilter.projectId === filter.config.projectId &&
+            activeFilter.dateRange === filter.config.dateRange;
 
-        {savedFilters.length === 0 && (
+          return (
+            <button
+              key={filter.id}
+              onClick={() => {
+                if (isActive) {
+                  setActiveFilter({});
+                } else {
+                  setActiveFilter(filter.config);
+                  setActiveView("inbox");
+                  setActiveProject("all");
+                  navigate({ to: "/app" });
+                }
+              }}
+              className={cn(
+                "w-full flex items-center gap-2.5 rounded-[8px] transition-colors cursor-pointer",
+                !collapsed
+                  ? "px-2.5 py-2"
+                  : "px-0 py-2 justify-center",
+                isActive
+                  ? "bg-ember/8 text-ember font-medium"
+                  : "text-ink-muted hover:bg-bone/60"
+              )}
+            >
+              <Filter size={16} className="flex-shrink-0" />
+              {!collapsed && (
+                <span className="text-sm sidebar-label">{filter.name}</span>
+              )}
+            </button>
+          );
+        })}
+
+        {savedFilters.length === 0 && !projectsLoading && (
           <button
             onClick={() => setFilterPanelOpen(true)}
             className={cn(

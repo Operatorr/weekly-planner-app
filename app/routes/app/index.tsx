@@ -8,6 +8,10 @@ import {
   isPast,
   isThisWeek,
   isBeyondThisWeek,
+  normalizeDate,
+  todayStr,
+  startOfWeekStr,
+  endOfWeekStr,
 } from "@/lib/task-context";
 import { AddTask } from "@/components/app/add-task";
 import { TaskList } from "@/components/app/task-list";
@@ -40,8 +44,59 @@ export const Route = createFileRoute("/app/")({
   component: TaskManagement,
 });
 
+function ActiveFilterBanner({
+  activeFilter,
+  onClear,
+  onOpen,
+}: {
+  activeFilter: import("@/components/app/filter-panel").FilterConfig;
+  onClear: () => void;
+  onOpen: () => void;
+}) {
+  const labels: string[] = [];
+  if (activeFilter.dateRange && activeFilter.dateRange !== "all") {
+    const map: Record<string, string> = {
+      today: "Today",
+      throughToday: "Through Today",
+      overdue: "Overdue",
+      thisWeek: "This Week",
+      nextWeek: "Next Week",
+    };
+    labels.push(map[activeFilter.dateRange] || activeFilter.dateRange);
+  }
+  if (activeFilter.status && activeFilter.status !== "all") {
+    labels.push(activeFilter.status === "completed" ? "Completed" : "Active");
+  }
+  if (activeFilter.projectId) {
+    labels.push("Project");
+  }
+  if (activeFilter.hasReminder && activeFilter.hasReminder !== "any") {
+    labels.push(activeFilter.hasReminder === "yes" ? "Has Reminder" : "No Reminder");
+  }
+
+  if (labels.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <button
+        onClick={onOpen}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ember/8 text-ember text-xs font-medium border border-ember/20 hover:bg-ember/12 transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        {labels.join(" · ")}
+      </button>
+      <button
+        onClick={onClear}
+        className="text-xs text-clay hover:text-ink transition-colors"
+      >
+        Clear
+      </button>
+    </div>
+  );
+}
+
 function TaskManagement() {
-  const { activeProject, activeView } = useAppContext();
+  const { activeProject, activeView, activeFilter, setActiveFilter, setFilterPanelOpen } = useAppContext();
   const { tasks, updateTask, reorderTasks, isLoading } = useTaskContext();
   const { data: projects = [] } = useProjects();
   const reducedMotion = useReducedMotion();
@@ -166,6 +221,13 @@ function TaskManagement() {
     [resetDragAnimation]
   );
 
+  // Check if a non-trivial filter is active
+  const isFilterActive =
+    (activeFilter.status && activeFilter.status !== "all") ||
+    activeFilter.projectId !== undefined ||
+    (activeFilter.dateRange && activeFilter.dateRange !== "all") ||
+    (activeFilter.hasReminder && activeFilter.hasReminder !== "any");
+
   // Filter tasks by active project and view
   const filteredTasks = useMemo(() => {
     let result = tasks;
@@ -175,43 +237,84 @@ function TaskManagement() {
       result = result.filter((t) => t.project_id === activeProject);
     }
 
-    // Filter by view
-    switch (activeView) {
-      case "today":
-        // Today view shows:
-        // - Overdue tasks (past due_date)
-        // - Due today
-        // - Undated tasks (no due_date and is_someday = false)
-        result = result.filter(
-          (t) =>
-            !t.is_someday &&
-            (
-              (t.due_date && (isToday(t.due_date) || isPast(t.due_date))) ||
-              !t.due_date
-            )
-        );
-        break;
-      case "upcoming":
-        // Upcoming: tasks with future due dates only (not today, not past)
-        result = result.filter(
-          (t) =>
-            t.due_date &&
-            !isToday(t.due_date) &&
-            !isPast(t.due_date)
-        );
-        break;
-      case "someday":
-        // Someday: only explicitly deferred tasks
-        result = result.filter((t) => t.is_someday);
-        break;
-      case "inbox":
-      default:
-        // Inbox: show all tasks (no filter)
-        break;
+    // Filter by view (skip when a filter is active — show all tasks for filtering)
+    if (!isFilterActive) {
+      switch (activeView) {
+        case "today":
+          result = result.filter(
+            (t) =>
+              !t.is_someday &&
+              (
+                (t.due_date && (isToday(t.due_date) || isPast(t.due_date))) ||
+                !t.due_date
+              )
+          );
+          break;
+        case "upcoming":
+          result = result.filter(
+            (t) =>
+              t.due_date &&
+              !isToday(t.due_date) &&
+              !isPast(t.due_date)
+          );
+          break;
+        case "someday":
+          result = result.filter((t) => t.is_someday);
+          break;
+        case "inbox":
+        default:
+          break;
+      }
+    }
+
+    // Apply activeFilter
+    if (activeFilter.status && activeFilter.status !== "all") {
+      result = result.filter((t) =>
+        activeFilter.status === "completed"
+          ? t.status === "completed"
+          : t.status !== "completed"
+      );
+    }
+
+    if (activeFilter.projectId) {
+      result = result.filter((t) => t.project_id === activeFilter.projectId);
+    }
+
+    if (activeFilter.dateRange && activeFilter.dateRange !== "all") {
+      const today = todayStr();
+      const weekStart = startOfWeekStr();
+      const weekEnd = endOfWeekStr();
+
+      result = result.filter((t) => {
+        const d = t.due_date ? normalizeDate(t.due_date) : null;
+
+        switch (activeFilter.dateRange) {
+          case "today":
+            return d === today;
+          case "throughToday":
+            return !d || d <= today;
+          case "overdue":
+            return d !== null && d < today;
+          case "thisWeek":
+            return d !== null && d >= weekStart && d <= weekEnd;
+          case "nextWeek": {
+            if (!d) return false;
+            const nextWeekStart = new Date(weekEnd + "T12:00:00");
+            nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+            const nextWeekEnd = new Date(nextWeekStart);
+            nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+            const nws = nextWeekStart.toISOString().split("T")[0];
+            const nwe = nextWeekEnd.toISOString().split("T")[0];
+            return d >= nws && d <= nwe;
+          }
+          default:
+            return true;
+        }
+      });
     }
 
     return result;
-  }, [tasks, activeProject, activeView]);
+  }, [tasks, activeProject, activeView, activeFilter, isFilterActive]);
 
   // Weekly view tasks: project-filtered only (not view-filtered) for this week's tasks
   const weeklyViewTasks = useMemo(() => {
@@ -232,9 +335,9 @@ function TaskManagement() {
     );
   }, [tasks, activeProject]);
 
-  // Determine which sections to show based on view
-  const showWeeklyView = activeView === "today" || activeView === "inbox";
-  const showFutureTasks = activeView === "today" || activeView === "inbox";
+  // Determine which sections to show based on view (hide when filter active)
+  const showWeeklyView = !isFilterActive && (activeView === "today" || activeView === "inbox");
+  const showFutureTasks = !isFilterActive && (activeView === "today" || activeView === "inbox");
 
   // Section 2: Tasks to show in the main task list
   // For upcoming/someday: show all filtered tasks (already filtered by view)
@@ -243,7 +346,10 @@ function TaskManagement() {
   const section2Tasks = useMemo(() => {
     let result: Task[];
 
-    if (activeView === "upcoming") {
+    if (isFilterActive) {
+      // When filter is active, show all filtered results in one flat list
+      result = filteredTasks;
+    } else if (activeView === "upcoming") {
       // Upcoming: show all filtered tasks sorted by date (chronological)
       result = [...filteredTasks].sort((a, b) => {
         if (!a.due_date) return 1;
@@ -271,7 +377,7 @@ function TaskManagement() {
       }
       return a.sort_order - b.sort_order;
     });
-  }, [filteredTasks, activeView]);
+  }, [filteredTasks, activeView, isFilterActive]);
 
   // Section 4: beyond this week
   const section4Tasks = filteredTasks.filter(
@@ -415,6 +521,15 @@ function TaskManagement() {
           </h1>
           <p className="text-sm text-ink-muted mt-1">{dateString}</p>
         </div>
+
+        {/* Active filter indicator */}
+        {isFilterActive && (
+          <ActiveFilterBanner
+            activeFilter={activeFilter}
+            onClear={() => setActiveFilter({})}
+            onOpen={() => setFilterPanelOpen(true)}
+          />
+        )}
 
         {/* Section 1: Add Task */}
         <AddTask />

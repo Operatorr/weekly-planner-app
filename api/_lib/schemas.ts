@@ -69,14 +69,22 @@ export const setReminderSchema = z.object({
 
 // --- Filters ---
 
+const filterConfigSchema = z.object({
+  status: z.enum(["active", "completed", "all"]).optional(),
+  project_id: z.string().uuid().optional().nullable(),
+  has_due_date: z.boolean().optional(),
+  has_reminder: z.boolean().optional(),
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  date_range: z.enum(["today", "thisWeek", "nextWeek", "throughToday", "overdue", "all"]).optional(),
+});
+
 export const createFilterViewSchema = z.object({
   name: z.string().min(1).max(100),
-  config: z.object({
-    status: z.enum(["active", "completed", "all"]).optional(),
-    project_id: z.string().uuid().optional().nullable(),
-    has_due_date: z.boolean().optional(),
-    has_reminder: z.boolean().optional(),
-    date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-    date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  }),
+  config: filterConfigSchema,
+});
+
+export const updateFilterViewSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  config: filterConfigSchema.optional(),
 });

@@ -26,7 +26,7 @@ export function DatePicker({
 
   const handleSelect = (date: Date | undefined) => {
     if (date) {
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       onChange(dateStr);
       // Selecting a date clears someday status
       onSomedayChange?.(false);

@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { mockProjects } from "@/lib/mock-data";
+import { useProjects } from "@/hooks/use-projects";
 import {
   X,
   Filter,
@@ -14,10 +14,12 @@ import {
   Save,
   Sparkles,
   Trash2,
+  Pencil,
+  Check,
 } from "lucide-react";
 
 export interface FilterConfig {
-  dateRange?: "today" | "thisWeek" | "nextWeek" | "all";
+  dateRange?: "today" | "thisWeek" | "nextWeek" | "throughToday" | "overdue" | "all";
   projectId?: string;
   status?: "active" | "completed" | "all";
   hasReminder?: "yes" | "no" | "any";
@@ -30,22 +32,14 @@ export interface SavedFilter {
   createdAt: string;
 }
 
-// Mock saved filters for static display
-const initialSavedFilters: SavedFilter[] = [
-  {
-    id: "f1",
-    name: "Due This Week",
-    config: { dateRange: "thisWeek", status: "active", hasReminder: "any" },
-    createdAt: new Date().toISOString(),
-  },
-];
-
 interface FilterPanelProps {
   open: boolean;
   onClose: () => void;
   onApplyFilter: (config: FilterConfig) => void;
+  activeFilter?: FilterConfig;
   savedFilters: SavedFilter[];
   onSaveFilter: (name: string, config: FilterConfig) => void;
+  onUpdateFilter: (id: string, name: string, config: FilterConfig) => void;
   onDeleteFilter: (id: string) => void;
   onApplySavedFilter: (filter: SavedFilter) => void;
   userTier?: "free" | "pro";
@@ -54,6 +48,8 @@ interface FilterPanelProps {
 const dateRangeOptions = [
   { value: "all", label: "All dates" },
   { value: "today", label: "Today" },
+  { value: "throughToday", label: "Through Today" },
+  { value: "overdue", label: "Overdue" },
   { value: "thisWeek", label: "This Week" },
   { value: "nextWeek", label: "Next Week" },
 ] as const;
@@ -74,21 +70,41 @@ export function FilterPanel({
   open,
   onClose,
   onApplyFilter,
+  activeFilter,
   savedFilters,
   onSaveFilter,
+  onUpdateFilter,
   onDeleteFilter,
   onApplySavedFilter,
   userTier = "free",
 }: FilterPanelProps) {
-  const [config, setConfig] = useState<FilterConfig>({
+  const { data: projects = [] } = useProjects();
+
+  const defaultConfig: FilterConfig = {
     dateRange: "all",
     projectId: undefined,
     status: "all",
     hasReminder: "any",
-  });
+  };
+
+  const [config, setConfig] = useState<FilterConfig>(defaultConfig);
+
+  // Sync local config when panel opens with the current active filter
+  useEffect(() => {
+    if (open && activeFilter) {
+      setConfig({
+        dateRange: activeFilter.dateRange || "all",
+        projectId: activeFilter.projectId,
+        status: activeFilter.status || "all",
+        hasReminder: activeFilter.hasReminder || "any",
+      });
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showSave, setShowSave] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [editingFilter, setEditingFilter] = useState<SavedFilter | null>(null);
+  const [editName, setEditName] = useState("");
 
   const updateConfig = useCallback(
     (patch: Partial<FilterConfig>) => {
@@ -110,6 +126,33 @@ export function FilterPanel({
     setShowSave(false);
   }, [userTier, savedFilters.length, filterName, config, onSaveFilter]);
 
+  const startEditing = useCallback((filter: SavedFilter) => {
+    setEditingFilter(filter);
+    setEditName(filter.name);
+    setConfig(filter.config);
+    onApplyFilter(filter.config);
+  }, [onApplyFilter]);
+
+  const cancelEditing = useCallback(() => {
+    setEditingFilter(null);
+    setEditName("");
+    const reset: FilterConfig = {
+      dateRange: "all",
+      status: "all",
+      hasReminder: "any",
+      projectId: undefined,
+    };
+    setConfig(reset);
+    onApplyFilter(reset);
+  }, [onApplyFilter]);
+
+  const handleUpdate = useCallback(() => {
+    if (!editingFilter || !editName.trim()) return;
+    onUpdateFilter(editingFilter.id, editName.trim(), config);
+    setEditingFilter(null);
+    setEditName("");
+  }, [editingFilter, editName, config, onUpdateFilter]);
+
   const resetFilters = useCallback(() => {
     const reset: FilterConfig = {
       dateRange: "all",
@@ -119,6 +162,8 @@ export function FilterPanel({
     };
     setConfig(reset);
     onApplyFilter(reset);
+    setEditingFilter(null);
+    setEditName("");
   }, [onApplyFilter]);
 
   const isFiltering =
@@ -143,7 +188,9 @@ export function FilterPanel({
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-ember" />
-            <span className="text-sm font-semibold text-ink">Filters</span>
+            <span className="text-sm font-semibold text-ink">
+              {editingFilter ? "Edit Filter" : "Filters"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {isFiltering && (
@@ -187,7 +234,7 @@ export function FilterPanel({
                 active={config.projectId === undefined}
                 onClick={() => updateConfig({ projectId: undefined })}
               />
-              {mockProjects.map((project) => (
+              {projects.map((project) => (
                 <FilterChip
                   key={project.id}
                   label={project.name}
@@ -229,8 +276,40 @@ export function FilterPanel({
 
           <Separator />
 
-          {/* Save Filter */}
-          {!showSave ? (
+          {/* Save / Update Filter */}
+          {editingFilter ? (
+            <div className="space-y-2">
+              <Input
+                placeholder="Filter name..."
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleUpdate();
+                  if (e.key === "Escape") cancelEditing();
+                }}
+                autoFocus
+                className="h-9 text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleUpdate}
+                  disabled={!editName.trim()}
+                >
+                  Update Filter
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={cancelEditing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : !showSave ? (
             <Button
               variant="subtle"
               size="sm"
@@ -315,13 +394,25 @@ export function FilterPanel({
                 {savedFilters.map((filter) => (
                   <div
                     key={filter.id}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-[8px] hover:bg-bone/60 transition-colors group cursor-pointer"
+                    className={cn(
+                      "flex items-center gap-2 px-2.5 py-2 rounded-[8px] hover:bg-bone/60 transition-colors group cursor-pointer",
+                      editingFilter?.id === filter.id && "bg-ember/5 ring-1 ring-ember/20"
+                    )}
                     onClick={() => onApplySavedFilter(filter)}
                   >
                     <Filter size={14} className="text-clay flex-shrink-0" />
                     <span className="text-sm text-ink-light flex-1 truncate">
                       {filter.name}
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(filter);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded flex items-center justify-center text-clay hover:text-ember transition-all"
+                    >
+                      <Pencil size={12} />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -394,5 +485,3 @@ function FilterChip({
   );
 }
 
-// Export initialSavedFilters for use in parent
-export { initialSavedFilters };

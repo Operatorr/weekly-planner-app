@@ -1,24 +1,27 @@
-import { useRef, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   DndContext,
-  closestCenter,
+  DragOverlay,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type DragMoveEvent,
+  type DragOverEvent,
+  type DragCancelEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useDemoTasks, type DemoView } from "./use-demo-tasks";
+import { useDemoTasks, type DemoView, type DemoTask } from "./use-demo-tasks";
 import { DemoSidebar } from "./demo-sidebar";
 import { DemoTaskItem } from "./demo-task-item";
 import { DemoWeeklyView } from "./demo-weekly-view";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
-import { gsap } from "@/lib/gsap-config";
-import { easings } from "@/lib/animation-presets";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export function DemoAppPreview() {
@@ -42,8 +45,16 @@ export function DemoAppPreview() {
   } = useDemoTasks();
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const activeElementRef = useRef<HTMLElement | null>(null);
+  const [activeTask, setActiveTask] = useState<DemoTask | null>(null);
+  const [insertionInfo, setInsertionInfo] = useState<{
+    overId: string;
+    position: "before" | "after";
+  } | null>(null);
   const reducedMotion = useReducedMotion();
+
+  // Framer Motion values for smooth drag overlay
+  const dragRotation = useMotionValue(0);
+  const dragScale = useSpring(1, { stiffness: 400, damping: 30 });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -54,53 +65,96 @@ export function DemoAppPreview() {
     })
   );
 
-  // GSAP drag animation handlers
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
-      if (reducedMotion) return;
-
       const { active } = event;
-      const element = document.querySelector(
-        `[data-task-id="${active.id}"]`
-      ) as HTMLElement;
+      const activeId = (active.id as string).startsWith("week-task-")
+        ? (active.id as string).replace("week-task-", "")
+        : (active.id as string);
+      const task = currentTasks.find((t) => t.id === activeId);
+      setActiveTask(task || null);
 
-      if (element) {
-        activeElementRef.current = element;
-        gsap.to(element, {
-          scale: 1.02,
-          boxShadow: "0 12px 40px rgba(44, 40, 37, 0.12)",
-          rotation: 1,
-          duration: 0.2,
-          ease: easings.outExpo,
+      if (reducedMotion) return;
+      dragScale.set(1.02);
+      dragRotation.set(1);
+    },
+    [reducedMotion, currentTasks, dragScale, dragRotation]
+  );
+
+  const handleDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      if (reducedMotion) return;
+      const { delta } = event;
+      const rotation = Math.min(Math.max(delta.x * 0.015, -2), 2);
+      dragRotation.set(rotation);
+    },
+    [reducedMotion, dragRotation]
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { over, active } = event;
+      if (!over) return;
+
+      if (over.id === active.id) {
+        setInsertionInfo(null);
+        return;
+      }
+
+      const overId = over.id as string;
+      // Only show insertion indicator for task-to-task reordering
+      // Allow week-task- (weekly view tasks) but not day- (date columns)
+      const isDayColumn = overId.startsWith("day-");
+      if (
+        !overId.startsWith("category-") &&
+        !isDayColumn
+      ) {
+        const activatorEvent = event.activatorEvent as PointerEvent;
+        const pointerY = activatorEvent.clientY + event.delta.y;
+        const overRect = over.rect;
+        const midpoint = overRect.top + overRect.height / 2;
+
+        setInsertionInfo({
+          overId,
+          position: pointerY < midpoint ? "before" : "after",
         });
+      } else {
+        setInsertionInfo(null);
       }
     },
-    [reducedMotion]
+    []
   );
 
   const resetDragAnimation = useCallback(() => {
-    if (reducedMotion || !activeElementRef.current) return;
+    setActiveTask(null);
+    setInsertionInfo(null);
 
-    gsap.to(activeElementRef.current, {
-      scale: 1,
-      boxShadow: "0 1px 2px rgba(44, 40, 37, 0.04)",
-      rotation: 0,
-      duration: 0.3,
-      ease: easings.spring,
-      clearProps: "boxShadow,rotation,scale",
-    });
-    activeElementRef.current = null;
-  }, [reducedMotion]);
+    if (reducedMotion) return;
+    dragScale.set(1);
+    dragRotation.set(0);
+  }, [reducedMotion, dragScale, dragRotation]);
+
+  const handleDragCancel = useCallback(
+    (_event: DragCancelEvent) => {
+      resetDragAnimation();
+    },
+    [resetDragAnimation]
+  );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       resetDragAnimation();
 
       const { active, over } = event;
-      if (!over) return;
+      if (!over || active.id === over.id) return;
 
-      const taskId = active.id as string;
+      const rawActiveId = active.id as string;
       const overId = over.id as string;
+
+      // Extract real task ID (weekly view tasks have "week-task-" prefix)
+      const taskId = rawActiveId.startsWith("week-task-")
+        ? rawActiveId.replace("week-task-", "")
+        : rawActiveId;
 
       // Handle category drops (sidebar)
       if (overId.startsWith("category-")) {
@@ -116,9 +170,14 @@ export function DemoAppPreview() {
         return;
       }
 
+      // Extract real over ID too
+      const realOverId = overId.startsWith("week-task-")
+        ? overId.replace("week-task-", "")
+        : overId;
+
       // Handle reorder within list
-      if (taskId !== overId) {
-        reorderTasks(taskId, overId);
+      if (taskId !== realOverId) {
+        reorderTasks(taskId, realOverId);
       }
     },
     [moveTaskToCategory, moveTaskToDate, reorderTasks, resetDragAnimation]
@@ -139,16 +198,23 @@ export function DemoAppPreview() {
     someday: "Someday",
   };
 
-  const taskIds = currentTasks.map((t) => t.id);
+  const activeTasks = currentTasks.filter((t) => t.status === "active");
+  const taskIds = activeTasks.map((t) => t.id);
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
-      <div className="relative rounded-[20px] border border-border bg-surface-raised shadow-xl overflow-hidden">
+      {/* app-preview class is the GSAP animation target — must be INSIDE DndContext
+          so the DragOverlay (position:fixed) isn't affected by GSAP's residual transform */}
+      <div className="app-preview relative">
+        <div className="relative rounded-[20px] border border-border bg-surface-raised shadow-xl overflow-hidden">
         {/* Browser chrome */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border-subtle bg-bone/50">
           <div className="flex gap-1.5">
@@ -207,18 +273,35 @@ export function DemoAppPreview() {
                 items={taskIds}
                 strategy={verticalListSortingStrategy}
               >
-                {currentTasks.length > 0 ? (
-                  currentTasks
-                    .filter((t) => t.status === "active")
-                    .map((task) => (
-                      <DemoTaskItem
-                        key={task.id}
-                        task={task}
-                        onToggle={toggleTask}
-                        onDelete={deleteTask}
-                        onUpdateTitle={updateTaskTitle}
-                      />
-                    ))
+                {activeTasks.length > 0 ? (
+                  activeTasks
+                    .map((task, index) => {
+                      let insertPosition: "before" | "after" | null = null;
+
+                      if (insertionInfo?.overId === task.id) {
+                        if (insertionInfo.position === "after") {
+                          insertPosition = "after";
+                        } else if (index === 0) {
+                          insertPosition = "before";
+                        }
+                      } else if (insertionInfo?.position === "before" && index > 0) {
+                        const nextTask = activeTasks[index + 1];
+                        if (nextTask && insertionInfo.overId === nextTask.id) {
+                          insertPosition = "after";
+                        }
+                      }
+
+                      return (
+                        <DemoTaskItem
+                          key={task.id}
+                          task={task}
+                          onToggle={toggleTask}
+                          onDelete={deleteTask}
+                          onUpdateTitle={updateTaskTitle}
+                          insertPosition={insertPosition}
+                        />
+                      );
+                    })
                 ) : (
                   <div className="text-center py-6 text-sm text-clay">
                     No tasks in {viewLabels[activeView].toLowerCase()}
@@ -258,7 +341,31 @@ export function DemoAppPreview() {
             )}
           </div>
         </div>
+        </div>
+        {/* Decorative glow behind preview */}
+        <div className="absolute -inset-4 -z-10 rounded-[28px] bg-gradient-to-b from-ember/[0.03] to-transparent blur-2xl" />
       </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeTask ? (
+          <motion.div
+            data-drag-overlay
+            style={{
+              scale: dragScale,
+              rotate: dragRotation,
+              boxShadow: "0 12px 40px rgba(44, 40, 37, 0.12)",
+            }}
+          >
+            <DemoTaskItem
+              task={activeTask}
+              onToggle={() => {}}
+              onDelete={() => {}}
+              onUpdateTitle={() => {}}
+              isOverlay
+            />
+          </motion.div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

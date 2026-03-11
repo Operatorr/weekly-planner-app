@@ -70,7 +70,7 @@ function LandingPage() {
         { opacity: 1, duration: 0.4 }, "-=0.2")
       .fromTo(".app-preview",
         { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, duration: 0.8 }, "-=0.3");
+        { opacity: 1, y: 0, duration: 0.8, clearProps: "transform" }, "-=0.3");
 
     // Feature cards scroll-triggered reveal
     ScrollTrigger.batch(".feature-card", {
@@ -183,10 +183,8 @@ function LandingPage() {
           </div>
 
           {/* ─── APP PREVIEW ─── */}
-          <div ref={appPreviewRef} className="app-preview mt-16 md:mt-24 relative">
+          <div ref={appPreviewRef} className="mt-16 md:mt-24">
             <DemoAppPreview />
-            {/* Decorative glow behind preview */}
-            <div className="absolute -inset-4 -z-10 rounded-[28px] bg-gradient-to-b from-ember/[0.03] to-transparent blur-2xl" />
           </div>
         </div>
       </section>

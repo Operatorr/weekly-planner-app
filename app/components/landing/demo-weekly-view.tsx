@@ -35,7 +35,7 @@ function DayColumn({
 
   const droppableId = `day-${day.date}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-  const taskIds = tasks.map((t) => t.id);
+  const taskIds = tasks.map((t) => `week-task-${t.id}`);
 
   // GSAP drop zone animation
   useEffect(() => {

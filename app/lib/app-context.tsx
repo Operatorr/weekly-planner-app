@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { SavedFilter } from "@/components/app/filter-panel";
+import type { SavedFilter, FilterConfig } from "@/components/app/filter-panel";
 
 export interface AppContextValue {
   sidebarOpen: boolean;
@@ -15,6 +15,8 @@ export interface AppContextValue {
   filterPanelOpen: boolean;
   setFilterPanelOpen: (open: boolean) => void;
   savedFilters: SavedFilter[];
+  activeFilter: FilterConfig;
+  setActiveFilter: (config: FilterConfig) => void;
 }
 
 export const AppContext = createContext<AppContextValue>({
@@ -31,6 +33,8 @@ export const AppContext = createContext<AppContextValue>({
   filterPanelOpen: false,
   setFilterPanelOpen: () => {},
   savedFilters: [],
+  activeFilter: {},
+  setActiveFilter: () => {},
 });
 
 export const useAppContext = () => useContext(AppContext);

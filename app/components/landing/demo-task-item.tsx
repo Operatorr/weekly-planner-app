@@ -3,10 +3,9 @@ import type { DemoTask } from "./use-demo-tasks";
 import { cn } from "@/lib/utils";
 import { GripVertical, Trash2, Check } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { gsap } from "@/lib/gsap-config";
-import { easings } from "@/lib/animation-presets";
+import { motion, useAnimate } from "framer-motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { playTaskCompleteSound } from "@/lib/sounds";
 
 interface DemoTaskItemProps {
   task: DemoTask;
@@ -14,6 +13,8 @@ interface DemoTaskItemProps {
   onDelete: (id: string) => void;
   onUpdateTitle: (id: string, title: string) => void;
   compact?: boolean;
+  insertPosition?: "before" | "after" | null;
+  isOverlay?: boolean;
 }
 
 export function DemoTaskItem({
@@ -22,13 +23,14 @@ export function DemoTaskItem({
   onDelete,
   onUpdateTitle,
   compact = false,
+  insertPosition = null,
+  isOverlay = false,
 }: DemoTaskItemProps) {
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
-  const itemRef = useRef<HTMLDivElement>(null);
-  const checkboxRef = useRef<HTMLButtonElement>(null);
+  const [checkboxScope, animateCheckbox] = useAnimate();
   const inputRef = useRef<HTMLInputElement>(null);
   const reducedMotion = useReducedMotion();
 
@@ -36,37 +38,11 @@ export function DemoTaskItem({
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
   } = useSortable({
     id: task.id,
-    disabled: editing,
+    disabled: editing || isOverlay,
   });
-
-  // GSAP drag feedback
-  useEffect(() => {
-    if (!itemRef.current || reducedMotion) return;
-
-    if (isDragging) {
-      gsap.to(itemRef.current, {
-        scale: 1.02,
-        boxShadow: "0 12px 40px rgba(44, 40, 37, 0.12)",
-        rotation: 1,
-        duration: 0.2,
-        ease: easings.outExpo,
-      });
-    } else {
-      gsap.to(itemRef.current, {
-        scale: 1,
-        boxShadow: "0 1px 2px rgba(44, 40, 37, 0.04)",
-        rotation: 0,
-        duration: 0.3,
-        ease: easings.spring,
-        clearProps: "boxShadow,rotation",
-      });
-    }
-  }, [isDragging, reducedMotion]);
 
   // Focus input when editing
   useEffect(() => {
@@ -76,9 +52,9 @@ export function DemoTaskItem({
     }
   }, [editing]);
 
+  // Notion-style: items stay in place, only the DragOverlay moves
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    opacity: isDragging ? 0 : 1,
     zIndex: isDragging ? 50 : undefined,
   };
 
@@ -86,21 +62,12 @@ export function DemoTaskItem({
     e.stopPropagation();
     if (task.status === "completed" || completing) return;
     setCompleting(true);
+    playTaskCompleteSound();
 
-    // GSAP celebration animation
-    if (!reducedMotion && checkboxRef.current) {
-      gsap.to(checkboxRef.current, {
-        scale: 1.3,
-        duration: 0.15,
-        ease: easings.outExpo,
-        onComplete: () => {
-          gsap.to(checkboxRef.current, {
-            scale: 1,
-            duration: 0.3,
-            ease: easings.spring,
-          });
-        },
-      });
+    // Framer Motion celebration animation
+    if (!reducedMotion) {
+      animateCheckbox(checkboxScope.current, { scale: 1.3 }, { duration: 0.15, ease: [0.16, 1, 0.3, 1] })
+        .then(() => animateCheckbox(checkboxScope.current, { scale: 1 }, { duration: 0.3, type: "spring", stiffness: 400, damping: 15 }));
     }
 
     setTimeout(() => {
@@ -135,48 +102,44 @@ export function DemoTaskItem({
     }
   };
 
-  // Combine refs
-  const setRefs = (node: HTMLDivElement | null) => {
-    setNodeRef(node);
-    (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-  };
-
   return (
     <div
-      ref={setRefs}
+      ref={setNodeRef}
       data-task-id={task.id}
       style={style}
+      {...attributes}
+      {...listeners}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onDoubleClick={handleDoubleClick}
       className={cn(
-        "group flex items-center gap-2 rounded-[10px] transition-colors duration-200 select-none",
+        "group flex items-center gap-2 rounded-[10px] transition-colors duration-200 select-none relative cursor-grab active:cursor-grabbing",
         compact ? "px-2 py-1.5" : "px-3 py-2",
         completing && "opacity-50",
-        isDragging && "bg-surface-raised",
         task.status === "completed"
           ? "opacity-40"
-          : "hover:bg-bone/50"
+          : "hover:bg-bone/50",
+        insertPosition === "before" &&
+          "before:absolute before:top-0 before:left-2 before:right-2 before:h-0.5 before:-translate-y-1/2 before:bg-ember/50 before:rounded-full before:shadow-[0_0_6px_rgba(212,100,74,0.4)] before:animate-pulse",
+        insertPosition === "after" &&
+          "after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:translate-y-1/2 after:bg-ember/50 after:rounded-full after:shadow-[0_0_6px_rgba(212,100,74,0.4)] after:animate-pulse"
       )}
     >
-      {/* Drag handle */}
+      {/* Drag handle (visual indicator) */}
       <div
-        {...attributes}
-        {...listeners}
         className={cn(
-          "transition-opacity duration-150 cursor-grab active:cursor-grabbing flex-shrink-0",
+          "transition-opacity duration-150 flex-shrink-0",
           hovered && task.status !== "completed" && !editing
             ? "opacity-30"
             : "opacity-0"
         )}
-        onClick={(e) => e.stopPropagation()}
       >
         <GripVertical size={compact ? 12 : 14} className="text-clay" />
       </div>
 
       {/* Checkbox */}
       <button
-        ref={checkboxRef}
+        ref={checkboxScope}
         onClick={handleCheck}
         className={cn(
           "relative rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-[border-color,background-color] duration-200",
@@ -250,55 +213,21 @@ export function DemoWeeklyTaskItem({
   task: DemoTask;
   onClick?: () => void;
 }) {
-  const itemRef = useRef<HTMLButtonElement>(null);
-  const reducedMotion = useReducedMotion();
-
   const {
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
-  } = useSortable({ id: task.id });
-
-  // GSAP drag feedback
-  useEffect(() => {
-    if (!itemRef.current || reducedMotion) return;
-
-    if (isDragging) {
-      gsap.to(itemRef.current, {
-        scale: 1.05,
-        boxShadow: "0 8px 24px rgba(44, 40, 37, 0.15)",
-        duration: 0.2,
-        ease: easings.outExpo,
-      });
-    } else {
-      gsap.to(itemRef.current, {
-        scale: 1,
-        boxShadow: "none",
-        duration: 0.3,
-        ease: easings.spring,
-        clearProps: "boxShadow",
-      });
-    }
-  }, [isDragging, reducedMotion]);
+  } = useSortable({ id: `week-task-${task.id}` });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    opacity: isDragging ? 0 : 1,
     zIndex: isDragging ? 50 : undefined,
-  };
-
-  // Combine refs
-  const setRefs = (node: HTMLButtonElement | null) => {
-    setNodeRef(node);
-    (itemRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
   };
 
   return (
     <button
-      ref={setRefs}
+      ref={setNodeRef}
       data-task-id={task.id}
       style={style}
       {...attributes}
@@ -307,7 +236,6 @@ export function DemoWeeklyTaskItem({
       className={cn(
         "w-full text-left px-2 py-1.5 rounded-[6px] text-[11px] text-ink-light truncate transition-colors",
         "hover:bg-bone/60",
-        isDragging && "bg-surface-raised"
       )}
     >
       <div className="flex items-center gap-1.5">

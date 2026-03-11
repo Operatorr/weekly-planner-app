@@ -14,7 +14,7 @@ import { useSettings } from "@/lib/settings-context";
 
 // ── Helpers ──────────────────────────────────────────────────────
 
-function todayStr(): string {
+export function todayStr(): string {
   return new Date().toISOString().split("T")[0];
 }
 
@@ -23,7 +23,7 @@ export function normalizeDate(dateStr: string): string {
   return dateStr.split("T")[0];
 }
 
-function startOfWeekStr(): string {
+export function startOfWeekStr(): string {
   const d = new Date();
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -31,7 +31,7 @@ function startOfWeekStr(): string {
   return d.toISOString().split("T")[0];
 }
 
-function endOfWeekStr(): string {
+export function endOfWeekStr(): string {
   const d = new Date();
   const day = d.getDay();
   const diff = day === 0 ? 0 : 7 - day;

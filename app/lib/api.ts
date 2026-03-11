@@ -208,3 +208,39 @@ export async function deleteChecklistItem(
     token,
   });
 }
+
+// ── Filters API ──────────────────────────────────────────────────
+
+export async function fetchFilters(token: string): Promise<Record<string, unknown>[]> {
+  return apiFetch<Record<string, unknown>[]>("/filters", { token });
+}
+
+export async function createFilter(
+  token: string,
+  data: { name: string; config: Record<string, unknown> }
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>("/filters", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function updateFilter(
+  token: string,
+  id: string,
+  data: { name?: string; config?: Record<string, unknown> }
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(`/filters?id=${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function deleteFilter(token: string, id: string): Promise<void> {
+  await apiFetch<{ success: boolean }>(`/filters?id=${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
