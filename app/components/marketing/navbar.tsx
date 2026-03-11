@@ -62,7 +62,7 @@ export function Navbar() {
             </svg>
           </div>
           <span className="font-display text-xl font-semibold tracking-tight text-ink">
-            Marrow
+            DoMarrow
           </span>
         </Link>
 
