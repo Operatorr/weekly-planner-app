@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap-config";
 import { useAuth } from "@clerk/clerk-react";
 import { AppContext } from "@/lib/app-context";
 import { AppSidebar } from "@/components/app/sidebar";
@@ -12,10 +13,63 @@ import { cn } from "@/lib/utils";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
 import { ProjectProvider } from "@/lib/project-context";
+import { SettingsProvider } from "@/lib/settings-context";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
+
+function LoadingScreen() {
+  const iconRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const icon = iconRef.current;
+    if (!icon) return;
+
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.5 });
+
+    tl
+      .set(icon, { y: -160, scaleX: 1, scaleY: 1, transformOrigin: "center bottom" })
+      // Fall from above
+      .to(icon, { y: 0, duration: 0.45, ease: "power3.in" })
+      // Squash on landing
+      .to(icon, { scaleX: 1.55, scaleY: 0.5, duration: 0.07, ease: "power2.out" })
+      // Stretch and pop upward
+      .to(icon, { scaleX: 0.8, scaleY: 1.3, y: -52, duration: 0.22, ease: "power2.out" })
+      // Fall back
+      .to(icon, { scaleX: 1.3, scaleY: 0.65, y: 0, duration: 0.18, ease: "power2.in" })
+      // Small bounce
+      .to(icon, { scaleX: 0.92, scaleY: 1.12, y: -14, duration: 0.12, ease: "power2.out" })
+      // Settle
+      .to(icon, { scaleX: 1, scaleY: 1, y: 0, duration: 0.14, ease: "power2.inOut" });
+  }, []);
+
+  return (
+    <div className="h-screen flex items-center justify-center bg-surface">
+      <div
+        ref={iconRef}
+        className="w-8 h-8 rounded-[8px] bg-ember flex items-center justify-center"
+      >
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <path
+            d="M3 9L7.5 13.5L15 4.5"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// Only show project tabs on the main task view, not on settings/activity
+function ProjectTabsConditional() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname === "/app" || pathname === "/app/") return <ProjectTabs />;
+  return null;
+}
 
 function AppLayout() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -110,24 +164,11 @@ function AppLayout() {
 
   // Show nothing while Clerk loads or if not signed in (redirecting)
   if (!isLoaded || !isSignedIn) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-surface">
-        <div className="w-8 h-8 rounded-[8px] bg-ember flex items-center justify-center animate-pulse">
-          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-            <path
-              d="M3 9L7.5 13.5L15 4.5"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
+    <SettingsProvider>
     <ProjectProvider>
       <TaskProvider>
         <AppContext.Provider
@@ -153,12 +194,12 @@ function AppLayout() {
               <AppSidebar />
               <main
                 className={cn(
-                  "flex-1 flex flex-col overflow-hidden transition-[margin] duration-300",
+                  "flex-1 min-w-0 flex flex-col min-h-0 transition-[margin] duration-300",
                   sidebarOpen ? "md:ml-[240px]" : "md:ml-[64px]"
                 )}
               >
-                <ProjectTabs />
-                <div className="flex-1 overflow-y-auto">
+                <ProjectTabsConditional />
+                <div className="flex-1 min-w-0 overflow-y-auto overscroll-contain">
                   <Outlet />
                 </div>
               </main>
@@ -186,5 +227,6 @@ function AppLayout() {
         </AppContext.Provider>
       </TaskProvider>
     </ProjectProvider>
+    </SettingsProvider>
   );
 }

@@ -5,6 +5,7 @@ import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-
 import { ProjectSelector } from "@/components/app/project-selector";
 import { useTaskContext } from "@/lib/task-context";
 import { useAppContext } from "@/lib/app-context";
+import { useSettings } from "@/lib/settings-context";
 import { useProjects } from "@/hooks/use-projects";
 import { useUserTier } from "@/hooks/use-user-tier";
 import { Plus } from "lucide-react";
@@ -12,6 +13,7 @@ import { Plus } from "lucide-react";
 export function AddTask() {
   const { createTask } = useTaskContext();
   const { activeProject, activeView } = useAppContext();
+  const { settings } = useSettings();
   const { data: projects = [] } = useProjects();
   const { data: userTier = "free" } = useUserTier();
   const [expanded, setExpanded] = useState(false);
@@ -49,12 +51,12 @@ export function AddTask() {
     return () => window.removeEventListener("marrow:focus-add-task", handleFocusAddTask);
   }, [expanded]);
 
-  const resetForm = () => {
+  const resetForm = (keepProject = false, keepDate = false) => {
     setTitle("");
     setDescription("");
-    setDueDate(null);
+    if (!keepDate) setDueDate(null);
     setReminder({ type: "none" });
-    setProjectId(getDefaultProject());
+    if (!keepProject) setProjectId(getDefaultProject());
   };
 
   const handleSubmit = () => {
@@ -74,9 +76,16 @@ export function AddTask() {
       reminder_time: reminder.time,
     });
 
-    // Close form immediately - task appears instantly via optimistic update
-    resetForm();
-    setExpanded(false);
+    if (settings.autoCloseFormAfterAdd) {
+      // Close form and reset fully
+      resetForm();
+      setExpanded(false);
+    } else {
+      // Stay open, reset only title/description, optionally keep project/date
+      resetForm(settings.keepProjectAfterAdd, settings.keepDueDateAfterAdd);
+      // Re-focus title input for rapid task entry
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -86,7 +95,7 @@ export function AddTask() {
     }
     if (e.key === "Escape") {
       setExpanded(false);
-      resetForm();
+      resetForm(false, false);
     }
   };
 
@@ -130,7 +139,7 @@ export function AddTask() {
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   setExpanded(false);
-                  resetForm();
+                  resetForm(false, false);
                 }
               }}
               placeholder="Description (optional)"
@@ -158,7 +167,7 @@ export function AddTask() {
             <button
               onClick={() => {
                 setExpanded(false);
-                resetForm();
+                resetForm(false, false);
               }}
               className="text-xs text-ink-muted hover:text-ink transition-colors"
             >

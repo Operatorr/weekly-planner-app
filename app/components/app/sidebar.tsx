@@ -21,6 +21,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useProjects, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskContext, normalizeDate } from "@/lib/task-context";
 import { useDroppable } from "@dnd-kit/core";
 import { ColorPicker } from "@/components/app/color-picker";
@@ -55,7 +56,7 @@ const bottomNavItems: NavItem[] = [
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen } = useAppContext();
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { mutate: updateProject } = useUpdateProject();
   const { mutate: deleteProject } = useDeleteProject();
   const { tasks } = useTaskContext();
@@ -170,7 +171,20 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           </Tooltip>
         </div>
 
-        {projects.map((project) => (
+        {projectsLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-[8px]",
+                  !collapsed ? "px-2.5 py-2" : "px-0 py-2 justify-center"
+                )}
+              >
+                <Skeleton className="w-2.5 h-2.5 rounded-full flex-shrink-0" />
+                {!collapsed && <Skeleton className="h-3.5 flex-1 rounded-[6px]" style={{ width: `${55 + i * 18}%` }} />}
+              </div>
+            ))
+          : projects.map((project) => (
           <div
             key={project.id}
             className={cn(
@@ -209,7 +223,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     setActiveView("inbox");
                     navigate({ to: "/app" });
                   }}
-                  className="flex items-center gap-2.5 flex-1 min-w-0"
+                  className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
                 >
                   <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -315,7 +329,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           <button
             key={filter.id}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-ink-muted",
+              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-ink-muted cursor-pointer",
               !collapsed
                 ? "px-2.5 py-2 hover:bg-bone/60"
                 : "px-0 py-2 justify-center hover:bg-bone/60"
@@ -332,7 +346,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           <button
             onClick={() => setFilterPanelOpen(true)}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-clay hover:text-ink-muted",
+              "w-full flex items-center gap-2.5 rounded-[8px] transition-colors text-clay hover:text-ink-muted cursor-pointer",
               !collapsed
                 ? "px-2.5 py-2 hover:bg-bone/60"
                 : "px-0 py-2 justify-center hover:bg-bone/60"
@@ -364,6 +378,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
               setActiveView(item.id);
               if (item.id === "activity") {
                 navigate({ to: "/app/activity" });
+              } else if (item.id === "settings") {
+                navigate({ to: "/app/settings" });
               } else {
                 navigate({ to: "/app" });
               }
@@ -425,7 +441,7 @@ function SidebarItem({
       ref={isDropTarget ? setNodeRef : undefined}
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-2.5 rounded-[8px] transition-[color,background-color,font-weight] duration-150",
+        "w-full flex items-center gap-2.5 rounded-[8px] transition-[color,background-color,font-weight] duration-150 cursor-pointer",
         collapsed ? "px-0 py-2.5 justify-center" : "px-2.5 py-2",
         active
           ? "bg-ember/8 text-ember font-medium"

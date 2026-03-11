@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { useAppContext } from "@/lib/app-context";
 import { cn } from "@/lib/utils";
 import { useProjects, useCreateProject } from "@/hooks/use-projects";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Check, X } from "lucide-react";
 
 export function ProjectTabs() {
   const { activeProject, setActiveProject } = useAppContext();
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const createProject = useCreateProject();
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -45,12 +46,20 @@ export function ProjectTabs() {
   return (
     <div className="border-b border-border-subtle bg-surface-raised shrink-0">
       <div className="flex items-center px-6 gap-1 overflow-x-auto scrollbar-none">
-        {tabs.map((tab) => (
+        {projectsLoading ? (
+          <>
+            {[40, 56, 48].map((w, i) => (
+              <div key={i} className="px-4 py-3">
+                <Skeleton className="h-3.5 rounded-[6px]" style={{ width: w }} />
+              </div>
+            ))}
+          </>
+        ) : tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveProject(tab.id)}
             className={cn(
-              "relative px-4 py-3 text-sm whitespace-nowrap transition-colors",
+              "relative px-4 py-3 text-sm whitespace-nowrap transition-colors cursor-pointer",
               activeProject === tab.id
                 ? "text-ink font-medium"
                 : "text-ink-muted hover:text-ink-light"
@@ -74,7 +83,7 @@ export function ProjectTabs() {
         ))}
 
         {/* Inline project creation */}
-        {isCreating ? (
+        {!projectsLoading && isCreating ? (
           <div className="flex items-center gap-1 px-2 py-1.5">
             <input
               ref={inputRef}
@@ -106,7 +115,7 @@ export function ProjectTabs() {
               <X size={14} />
             </button>
           </div>
-        ) : (
+        ) : !projectsLoading ? (
           <button
             onClick={() => setIsCreating(true)}
             aria-label="Add project"
@@ -114,7 +123,7 @@ export function ProjectTabs() {
           >
             <Plus size={16} />
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

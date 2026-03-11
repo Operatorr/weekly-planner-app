@@ -141,6 +141,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
 }
 
 body {
@@ -149,6 +150,7 @@ body {
   background-color: var(--color-surface);
   line-height: 1.6;
   font-size: var(--font-size-base);
+  overscroll-behavior: none;
 }
 
 ::selection {
