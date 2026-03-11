@@ -278,7 +278,9 @@ export function TaskItem({
       <div
         className={cn(
           "flex items-center gap-0.5 transition-opacity duration-150",
-          hovered && task.status !== "completed" ? "opacity-100" : "opacity-0"
+          task.status !== "completed"
+            ? "opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            : "opacity-0"
         )}
       >
         <DropdownMenu>
