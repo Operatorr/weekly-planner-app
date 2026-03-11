@@ -48,7 +48,7 @@ export const defaultSettings: AppSettings = {
   defaultReminderType: "none",
   confirmBeforeDelete: false,
   autoArchiveAfterDays: 0,
-  soundOnComplete: false,
+  soundOnComplete: true,
 };
 
 function loadSettings(): AppSettings {

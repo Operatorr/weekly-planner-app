@@ -72,6 +72,7 @@ export async function createTask(
     project_id?: string | null;
     due_date?: string | null;
     is_someday?: boolean;
+    sort_order?: number;
   }
 ): Promise<Task> {
   return apiFetch<Task>("/tasks", {

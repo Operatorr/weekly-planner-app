@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Task, ChecklistItem } from "@/lib/types";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { useSettings } from "@/lib/settings-context";
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -154,6 +155,7 @@ export function useTaskContext() {
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const { settings } = useSettings();
 
   // Local checklist cache (fetched on demand per task)
   const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>({});
@@ -181,6 +183,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       due_date?: string | null;
       project_id?: string | null;
       is_someday?: boolean;
+      sort_order?: number;
       optimisticId: string;
     }) => {
       const token = await getToken();
@@ -191,6 +194,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         project_id: input.project_id,
         due_date: input.due_date,
         is_someday: input.is_someday,
+        sort_order: input.sort_order,
       });
     },
     onMutate: async (input) => {
@@ -200,13 +204,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       // Snapshot previous value
       const previous = queryClient.getQueryData<Task[]>(["tasks"]) || [];
 
-      // Calculate next sort_order (same logic as server)
-      const maxSortOrder = previous.reduce(
-        (max, t) => Math.max(max, t.sort_order),
-        0
-      );
+      // Calculate sort_order based on position setting
+      const addToTop = settings.newTaskPosition === "top";
+      const sortOrder = addToTop
+        ? previous.reduce((min, t) => Math.min(min, t.sort_order), 0) - 1
+        : previous.reduce((max, t) => Math.max(max, t.sort_order), 0) + 1;
 
-      // Optimistically add the new task at the bottom
+      // Store sort_order on input so mutationFn can send it to the server
+      input.sort_order = sortOrder;
+
       const optimisticTask: Task = {
         id: input.optimisticId,
         user_id: "",
@@ -216,16 +222,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         status: "active",
         due_date: input.due_date || null,
         is_someday: input.is_someday || false,
-        sort_order: maxSortOrder + 1,
+        sort_order: sortOrder,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         completed_at: null,
       };
 
-      queryClient.setQueryData<Task[]>(["tasks"], [
-        ...previous,
-        optimisticTask,
-      ]);
+      queryClient.setQueryData<Task[]>(["tasks"], addToTop
+        ? [optimisticTask, ...previous]
+        : [...previous, optimisticTask]
+      );
 
       return { previous, optimisticId: input.optimisticId };
     },

@@ -341,6 +341,9 @@ export function TaskItem({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
+                if (settings.confirmBeforeDelete) {
+                  if (!window.confirm("Delete this task?")) return;
+                }
                 onDelete?.(task.id);
               }}
               className="text-red-600 focus:text-red-600"
