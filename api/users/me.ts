@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { authenticateRequest } from "../_lib/auth";
-import { handleError } from "../_lib/validate";
-import { getUserTier } from "../_lib/tier";
+import { authenticateRequest } from "../_lib/auth.js";
+import { handleError } from "../_lib/validate.js";
+import { getUserTier } from "../_lib/tier.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {

@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
-import { authenticateRequest } from "../_lib/auth";
-import { parseBody, handleError } from "../_lib/validate";
-import { addChecklistItemSchema } from "../_lib/schemas";
-import { logActivity } from "../_lib/activity";
+import { authenticateRequest } from "../_lib/auth.js";
+import { parseBody, handleError } from "../_lib/validate.js";
+import { addChecklistItemSchema } from "../_lib/schemas.js";
+import { logActivity } from "../_lib/activity.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

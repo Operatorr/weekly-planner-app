@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
-import { authenticateRequest } from "../_lib/auth";
-import { parseBody, handleError } from "../_lib/validate";
-import { reorderTasksSchema } from "../_lib/schemas";
+import { authenticateRequest } from "../_lib/auth.js";
+import { parseBody, handleError } from "../_lib/validate.js";
+import { reorderTasksSchema } from "../_lib/schemas.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

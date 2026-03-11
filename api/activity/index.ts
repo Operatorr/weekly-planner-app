@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
-import { authenticateRequest } from "../_lib/auth";
-import { handleError } from "../_lib/validate";
-import { getUserTier, getActivityCutoff } from "../_lib/tier";
+import { authenticateRequest } from "../_lib/auth.js";
+import { handleError } from "../_lib/validate.js";
+import { getUserTier, getActivityCutoff } from "../_lib/tier.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {

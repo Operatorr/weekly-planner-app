@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
-import { authenticateRequest } from "../_lib/auth";
-import { parseBody, handleError } from "../_lib/validate";
-import { createTaskSchema } from "../_lib/schemas";
-import { logActivity } from "../_lib/activity";
-import { cleanupOldCompletedTasks, cleanupOldActivity } from "../_lib/tier";
+import { authenticateRequest } from "../_lib/auth.js";
+import { parseBody, handleError } from "../_lib/validate.js";
+import { createTaskSchema } from "../_lib/schemas.js";
+import { logActivity } from "../_lib/activity.js";
+import { cleanupOldCompletedTasks, cleanupOldActivity } from "../_lib/tier.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
