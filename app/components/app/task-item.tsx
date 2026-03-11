@@ -25,6 +25,8 @@ import { gsap } from "@/lib/gsap-config";
 import { easings } from "@/lib/animation-presets";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { createCompletionParticles } from "@/hooks/use-drag-animation";
+import { useSettings } from "@/lib/settings-context";
+import { playTaskCompleteSound } from "@/lib/sounds";
 
 interface TaskItemProps {
   task: Task;
@@ -53,6 +55,7 @@ export function TaskItem({
   sortable = false,
   insertPosition,
 }: TaskItemProps) {
+  const { settings } = useSettings();
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
@@ -85,6 +88,10 @@ export function TaskItem({
     e.stopPropagation();
     if (task.status === "completed") return;
     setCompleting(true);
+
+    if (settings.soundOnComplete) {
+      playTaskCompleteSound();
+    }
 
     // GSAP celebration animation
     if (!reducedMotion && checkboxRef.current) {

@@ -6,6 +6,8 @@ import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-
 import { ProjectSelector } from "@/components/app/project-selector";
 import { useProjects } from "@/hooks/use-projects";
 import { useUserTier } from "@/hooks/use-user-tier";
+import { useSettings } from "@/lib/settings-context";
+import { playTaskCompleteSound } from "@/lib/sounds";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -32,6 +34,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   } = useTaskContext();
   const { data: projects = [] } = useProjects();
   const { data: userTier = "free" } = useUserTier();
+  const { settings } = useSettings();
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -232,7 +235,12 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
                     className="text-clay opacity-0 group-hover:opacity-30 transition-opacity"
                   />
                   <button
-                    onClick={() => toggleChecklistItem(task.id, item.id)}
+                    onClick={() => {
+                      if (!item.is_completed && settings.soundOnComplete) {
+                        playTaskCompleteSound();
+                      }
+                      toggleChecklistItem(task.id, item.id);
+                    }}
                     className={cn(
                       "w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center flex-shrink-0 transition-colors duration-200",
                       item.is_completed

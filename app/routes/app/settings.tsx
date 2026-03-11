@@ -452,14 +452,10 @@ function SettingsPage() {
               label="Sound on task complete"
               description="Play a subtle sound when you check off a task."
             >
-              <div className="flex items-center gap-2">
-                <PlanBadge />
-                <Toggle
-                  checked={settings.soundOnComplete}
-                  onChange={(v) => update("soundOnComplete", v)}
-                  disabled
-                />
-              </div>
+              <Toggle
+                checked={settings.soundOnComplete}
+                onChange={(v) => update("soundOnComplete", v)}
+              />
             </SettingRow>
           </Section>
 
