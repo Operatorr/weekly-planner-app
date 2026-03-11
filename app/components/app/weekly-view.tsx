@@ -104,9 +104,9 @@ function DayColumn({
         >
           {day.label}
         </span>
-        {day.isToday && (
+        {/* {day.isToday && (
           <div className="w-1.5 h-1.5 rounded-full bg-ember mx-auto mt-1" />
-        )}
+        )} */}
       </div>
 
       {/* Day tasks */}

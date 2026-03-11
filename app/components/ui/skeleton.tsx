@@ -49,7 +49,15 @@ export function TaskListSkeleton({ count = 4 }: { count?: number }) {
 
 export function WeeklyViewSkeleton() {
   return (
-    <div className="px-4">
+    <section>
+      {/* Header skeleton to match WeeklyView structure */}
+      <div className="flex items-center justify-between px-5 mb-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      </div>
+      <div className="px-4">
       <div className="grid grid-cols-7 gap-1.5 min-h-[200px]">
         {Array.from({ length: 7 }).map((_, i) => (
           <div
@@ -57,7 +65,7 @@ export function WeeklyViewSkeleton() {
             className="rounded-[12px] border border-border-subtle bg-surface-raised/50 min-h-[180px]"
           >
             <div className="px-2.5 py-2 text-center border-b border-border-subtle/60">
-              <Skeleton className="h-3 w-8 mx-auto" />
+              <Skeleton className="h-3 w-3 sm:w-8 mx-auto" />
             </div>
             <div className="p-1 space-y-1">
               {i % 3 !== 2 && <Skeleton className="h-7 w-full" />}
@@ -66,7 +74,8 @@ export function WeeklyViewSkeleton() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </section>
   );
 }
 
