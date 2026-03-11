@@ -1,6 +1,6 @@
 import { Outlet, createRootRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ClerkProvider, useAuth } from "@clerk/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -26,7 +26,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <QueryClientProvider client={queryClient}>
         <AuthCacheCleaner />
         <ErrorBoundary>

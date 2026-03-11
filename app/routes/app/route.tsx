@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap-config";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { AppContext } from "@/lib/app-context";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/header";
@@ -29,19 +29,19 @@ function LoadingScreen() {
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.5 });
 
     tl
-      .set(icon, { y: -160, scaleX: 1, scaleY: 1, transformOrigin: "center bottom" })
+      .set(icon, { y: -60, scaleX: 1, scaleY: 1, transformOrigin: "center bottom" })
       // Fall from above
-      .to(icon, { y: 0, duration: 0.45, ease: "power3.in" })
+      .to(icon, { y: 0, duration: 0.25, ease: "power3.in" })
       // Squash on landing
-      .to(icon, { scaleX: 1.55, scaleY: 0.5, duration: 0.07, ease: "power2.out" })
+      .to(icon, { scaleX: 1.55, scaleY: 0.5, duration: 0.06, ease: "power2.out" })
       // Stretch and pop upward
-      .to(icon, { scaleX: 0.8, scaleY: 1.3, y: -52, duration: 0.22, ease: "power2.out" })
+      .to(icon, { scaleX: 0.8, scaleY: 1.3, y: -30, duration: 0.18, ease: "power2.out" })
       // Fall back
-      .to(icon, { scaleX: 1.3, scaleY: 0.65, y: 0, duration: 0.18, ease: "power2.in" })
+      .to(icon, { scaleX: 1.3, scaleY: 0.65, y: 0, duration: 0.14, ease: "power2.in" })
       // Small bounce
-      .to(icon, { scaleX: 0.92, scaleY: 1.12, y: -14, duration: 0.12, ease: "power2.out" })
+      .to(icon, { scaleX: 0.92, scaleY: 1.12, y: -8, duration: 0.1, ease: "power2.out" })
       // Settle
-      .to(icon, { scaleX: 1, scaleY: 1, y: 0, duration: 0.14, ease: "power2.inOut" });
+      .to(icon, { scaleX: 1, scaleY: 1, y: 0, duration: 0.1, ease: "power2.inOut" });
   }, []);
 
   return (

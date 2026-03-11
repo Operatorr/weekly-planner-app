@@ -39,6 +39,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [dueDate, setDueDate] = useState<string | null>(task.due_date);
+  const [isSomeday, setIsSomeday] = useState(task.is_someday || false);
   const [projectId, setProjectId] = useState(task.project_id);
   const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -75,6 +76,11 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const handleDateChange = (date: string | null) => {
     setDueDate(date);
     updateTask(task.id, { due_date: date });
+  };
+
+  const handleSomedayChange = (someday: boolean) => {
+    setIsSomeday(someday);
+    updateTask(task.id, { is_someday: someday });
   };
 
   const handleProjectChange = (pid: string | null) => {
@@ -183,7 +189,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
           {/* Meta fields */}
           <div className="space-y-2">
-            <DatePicker value={dueDate} onChange={handleDateChange} />
+            <DatePicker value={dueDate} onChange={handleDateChange} isSomeday={isSomeday} onSomedayChange={handleSomedayChange} />
             <ReminderSelector value={reminder} onChange={setReminder} userTier={userTier} />
             <ProjectSelector value={projectId} onChange={handleProjectChange} projects={projects} />
           </div>

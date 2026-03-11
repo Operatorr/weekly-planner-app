@@ -1,5 +1,5 @@
 import { useAppContext } from "@/lib/app-context";
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton } from "@clerk/react";
 import { useIsFetching, onlineManager } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,7 +99,7 @@ export function AppHeader() {
             </svg>
           </div>
           <span className="font-display text-base font-semibold tracking-tight text-ink hidden sm:inline">
-            Marrow
+            DoMarrow
           </span>
         </div>
 
@@ -139,7 +139,6 @@ export function AppHeader() {
 
         {/* Profile — Clerk UserButton */}
         <UserButton
-          afterSignOutUrl="/"
           appearance={{
             elements: {
               avatarBox: "w-8 h-8",
