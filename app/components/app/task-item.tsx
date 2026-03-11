@@ -184,7 +184,9 @@ export function TaskItem({
           {...listeners}
           className={cn(
             "self-center -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
-            hovered && task.status !== "completed" ? "opacity-50" : "opacity-0"
+            task.status !== "completed"
+              ? "opacity-50 md:opacity-0 md:group-hover:opacity-50"
+              : "opacity-0"
           )}
           onClick={(e) => e.stopPropagation()}
         >
