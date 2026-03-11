@@ -32,7 +32,7 @@ export interface AppSettings {
 const SETTINGS_KEY = "domarrow:settings";
 
 export const defaultSettings: AppSettings = {
-  autoCloseFormAfterAdd: false,
+  autoCloseFormAfterAdd: true,
   newTaskPosition: "bottom",
   keepProjectAfterAdd: false,
   keepDueDateAfterAdd: false,
