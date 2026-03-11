@@ -9,7 +9,6 @@ import { ProjectTabs } from "@/components/app/project-tabs";
 import { QuickFind } from "@/components/app/quick-find";
 import { FilterPanel, type FilterConfig } from "@/components/app/filter-panel";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { cn } from "@/lib/utils";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
 import { ProjectProvider } from "@/lib/project-context";
@@ -207,10 +206,7 @@ function AppLayout() {
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
               <main
-                className={cn(
-                  "flex-1 min-w-0 flex flex-col min-h-0 transition-[margin] duration-300",
-                  sidebarOpen ? "md:ml-[240px]" : "md:ml-[64px]"
-                )}
+                className="flex-1 min-w-0 flex flex-col min-h-0"
               >
                 <ProjectTabsConditional />
                 <div className="flex-1 min-w-0 overflow-y-auto overscroll-contain">

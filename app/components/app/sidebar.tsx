@@ -420,7 +420,7 @@ export function AppSidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "fixed top-14 left-0 bottom-0 z-20 bg-surface-raised border-r border-border-subtle flex flex-col sidebar-transition overflow-hidden",
+          "z-20 bg-surface-raised border-r border-border-subtle flex flex-col sidebar-transition overflow-hidden shrink-0",
           sidebarOpen ? "w-[240px]" : "w-[64px]",
           "hidden md:flex"
         )}
