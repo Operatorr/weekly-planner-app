@@ -2,7 +2,7 @@
   "name": "DoMarrow",
   "short_name": "DoMarrow",
   "description": "Your tasks, beautifully organized",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#D4644A",
