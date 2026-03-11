@@ -2,9 +2,9 @@
 
 ## Overview
 
-Integrate Clerk for authentication across Marrow Tasker — sign-up, sign-in, sign-out, email verification, and session management. After this ticket, users can create accounts, verify their email, sign in, and access protected app routes. Unauthenticated users are redirected to the landing page or sign-in.
+Integrate Clerk for authentication across DoMarrow — sign-up, sign-in, sign-out, email verification, and session management. After this ticket, users can create accounts, verify their email, sign in, and access protected app routes. Unauthenticated users are redirected to the landing page or sign-in.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Authentication System), __@Core Flows: Marrow Tasker__ (F1.1 Sign Up, F1.2 Sign In, F1.3 Sign Out, F1.4 Password Reset)
+**References**: __@Epic Brief: DoMarrow__ (Authentication System), __@Core Flows: DoMarrow__ (F1.1 Sign Up, F1.2 Sign In, F1.3 Sign Out, F1.4 Password Reset)
 
 ## Scope
 
@@ -16,7 +16,7 @@ Integrate Clerk for authentication across Marrow Tasker — sign-up, sign-in, si
    * Set up environment variables: `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
    * Configure Clerk to use Resend for transactional emails (email verification, password reset)
    * Enable email + password authentication strategy
-   * Configure Clerk appearance to match Marrow Tasker's clean/minimal theme
+   * Configure Clerk appearance to match DoMarrow's clean/minimal theme
 
 2. **Auth Routes** (__@src/routes/__)
    * `/sign-up` route — Clerk `<SignUp />` component, styled to match app theme
@@ -68,7 +68,7 @@ Integrate Clerk for authentication across Marrow Tasker — sign-up, sign-in, si
 * For Resend integration, configure Clerk's email settings in the Clerk Dashboard to use a custom SMTP/API with Resend. Alternatively, use Clerk's built-in email if Resend integration is complex — the key requirement is that emails work.
 * User provisioning via Clerk webhooks is the most reliable approach (handles edge cases like failed post-sign-up actions). Set up a webhook endpoint at `/api/webhooks/clerk`.
 * For route protection, TanStack Start supports middleware — use it to check Clerk session on protected routes.
-* The Clerk appearance API allows deep customization — match the neutral/minimal Marrow Tasker theme (no colored backgrounds, clean typography, subtle borders).
+* The Clerk appearance API allows deep customization — match the neutral/minimal DoMarrow theme (no colored backgrounds, clean typography, subtle borders).
 * Store the Clerk user ID as the primary identifier in the Neon `users` table — don't generate a separate UUID.
 
 ## Dependencies

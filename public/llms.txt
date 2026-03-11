@@ -1,0 +1,17 @@
+# DoMarrow
+
+> DoMarrow is a minimal, focused task manager for individuals who value clarity over complexity. It offers smart quick-add, weekly planning views, and email reminders — available free forever with an optional Pro upgrade.
+
+## Key Pages
+
+- [Home](https://domarrow.app/): Landing page with product overview and feature highlights
+- [Pricing](https://domarrow.app/pricing): Free and Pro tier comparison, FAQ
+
+## Product
+
+DoMarrow helps users capture tasks quickly, plan their week with a column-based view, and stay on top of priorities without clutter. The free tier is free forever. Pro adds Kanban/calendar layouts, custom reminders, unlimited history, and AI task assist (coming soon).
+
+## Optional
+
+- [Sign Up](https://domarrow.app/sign-up): Create a free account
+- [Sign In](https://domarrow.app/sign-in): Log in to the app

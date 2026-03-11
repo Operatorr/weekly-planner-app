@@ -1,8 +1,8 @@
-# Epic Brief: Marrow Tasker — Todo List SaaS Application
+# Epic Brief: DoMarrow — Todo List SaaS Application
 
 ## Summary
 
-Marrow Tasker is a modern, clean, minimal task management SaaS application built on TanStack Start (React), Shadcn UI, TanStack DB with Neon PostgreSQL, Clerk authentication, and Resend email services — deployed to Vercel. The product delivers a freemium task management experience inspired by Things and Todoist, emphasizing beautiful design, delightful interactions, and a structured daily/weekly workflow. The MVP launches with a Free tier only (Pro tier defined but disabled pending Stripe integration), supporting personal project management with smart task organization across four temporal views: undated/overdue, today, weekly, and future. Success looks like a fully functional, deployable SaaS with landing page, pricing page, authentication flow, and a core task management experience that feels polished enough for early adopters.
+DoMarrow is a modern, clean, minimal task management SaaS application built on TanStack Start (React), Shadcn UI, TanStack DB with Neon PostgreSQL, Clerk authentication, and Resend email services — deployed to Vercel. The product delivers a freemium task management experience inspired by Things and Todoist, emphasizing beautiful design, delightful interactions, and a structured daily/weekly workflow. The MVP launches with a Free tier only (Pro tier defined but disabled pending Stripe integration), supporting personal project management with smart task organization across four temporal views: undated/overdue, today, weekly, and future. Success looks like a fully functional, deployable SaaS with landing page, pricing page, authentication flow, and a core task management experience that feels polished enough for early adopters.
 
 ## Context & Problem
 
@@ -38,7 +38,7 @@ TanStack DB is still in beta (v0.5.25) but provides three sync modes (eager, on-
 
 ### Where in the Product
 
-- **Landing Page** (Priority 1): Marketing page introducing Marrow Tasker, its value proposition, and call-to-action for sign-up
+- **Landing Page** (Priority 1): Marketing page introducing DoMarrow, its value proposition, and call-to-action for sign-up
 - **Pricing Page** (Priority 1): Two-tier pricing display (Free active, Pro disabled/coming-soon) with feature comparison
 - **Authentication System** (Priority 1): Clerk-powered sign-up/sign-in with email verification via Resend
 - **Task Management — Core UI** (Priority 1): The main application interface with four sections (Add Task, Task List, Weekly View, Future Tasks) and project tabs

@@ -1,4 +1,4 @@
--- Marrow Tasker: Neon PostgreSQL Schema
+-- DoMarrow: Neon PostgreSQL Schema
 -- Run this against your Neon database to bootstrap all tables.
 
 -- Extensions

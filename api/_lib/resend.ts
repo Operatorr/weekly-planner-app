@@ -17,7 +17,7 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   const resend = getResend();
-  const from = process.env.FROM_EMAIL ?? "Marrow Tasker <noreply@marrowtasker.com>";
+  const from = process.env.FROM_EMAIL ?? "DoMarrow <noreply@domarrow.app>";
 
   const { data, error } = await resend.emails.send({
     from,

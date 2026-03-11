@@ -25,7 +25,7 @@ export function Footer() {
                 </svg>
               </div>
               <span className="font-display text-lg font-semibold text-ink">
-                Marrow
+                DoMarrow
               </span>
             </Link>
             <p className="text-sm text-ink-muted leading-relaxed">
@@ -94,7 +94,7 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-clay">
-            &copy; {year ?? ""} Marrow Tasker. All rights
+            &copy; {year ?? ""} DoMarrow. All rights
             reserved.
           </p>
           <div className="flex items-center gap-5">

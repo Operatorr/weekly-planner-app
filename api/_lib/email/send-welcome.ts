@@ -6,7 +6,7 @@ import { welcomeEmailHtml, WELCOME_EMAIL_SUBJECT } from "./welcome.js";
  * Non-blocking: errors are logged but don't throw.
  */
 export async function sendWelcomeEmail(email: string): Promise<void> {
-  const appUrl = process.env.APP_URL ?? "https://marrowtasker.com";
+  const appUrl = process.env.APP_URL ?? "https://domarrow.app";
 
   try {
     await sendEmail({

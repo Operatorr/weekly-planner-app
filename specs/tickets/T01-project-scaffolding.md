@@ -2,9 +2,9 @@
 
 ## Overview
 
-Bootstrap the Marrow Tasker monorepo with TanStack Start (React), configure Tailwind CSS v4, install Shadcn UI, set up TypeScript, and establish the project structure. This is the foundation ticket — everything else builds on top of it. After this ticket is done, a developer can `pnpm dev` and see a running TanStack Start app with Shadcn components available.
+Bootstrap the DoMarrow monorepo with TanStack Start (React), configure Tailwind CSS v4, install Shadcn UI, set up TypeScript, and establish the project structure. This is the foundation ticket — everything else builds on top of it. After this ticket is done, a developer can `pnpm dev` and see a running TanStack Start app with Shadcn components available.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Tech Stack Reference), __@Core Flows: Marrow Tasker__ (all flows depend on this foundation)
+**References**: __@Epic Brief: DoMarrow__ (Tech Stack Reference), __@Core Flows: DoMarrow__ (all flows depend on this foundation)
 
 ## Scope
 
@@ -19,7 +19,7 @@ Bootstrap the Marrow Tasker monorepo with TanStack Start (React), configure Tail
 2. **Styling & UI Setup**
    * Install and configure Tailwind CSS v4
    * Initialize Shadcn UI with "New York" style (clean/minimal aesthetic)
-   * Configure CSS variables for Marrow Tasker theme (clean, Things-inspired palette)
+   * Configure CSS variables for DoMarrow theme (clean, Things-inspired palette)
    * Install core Shadcn components: Button, Input, Card, Dialog, DropdownMenu, Popover, Tabs, Badge, Toast, Tooltip, Separator, Avatar, Command (for Quick Find)
 
 3. **Project Structure** (__@src/__)
@@ -55,7 +55,7 @@ Bootstrap the Marrow Tasker monorepo with TanStack Start (React), configure Tail
 ## Acceptance Criteria
 
 * `pnpm install` completes without errors
-* `pnpm dev` starts the development server and renders a "Hello, Marrow Tasker" placeholder page
+* `pnpm dev` starts the development server and renders a "Hello, DoMarrow" placeholder page
 * Shadcn UI components render correctly (verified by rendering a sample Button and Card)
 * Tailwind CSS classes work throughout the application
 * TypeScript strict mode is enabled with zero type errors

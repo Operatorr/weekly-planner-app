@@ -2,9 +2,9 @@
 
 ## Overview
 
-Build the core task management interface — the heart of Marrow Tasker. This is the main view users interact with daily. It consists of four sections: Add Task input, Task List (undated/overdue/today), Weekly View (Mon–Sun columns), and Future Tasks. This ticket implements the visual components, task rendering, section logic, and drag-and-drop interactions. It's the largest and most critical UI ticket.
+Build the core task management interface — the heart of DoMarrow. This is the main view users interact with daily. It consists of four sections: Add Task input, Task List (undated/overdue/today), Weekly View (Mon–Sun columns), and Future Tasks. This ticket implements the visual components, task rendering, section logic, and drag-and-drop interactions. It's the largest and most critical UI ticket.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Task Management — Core UI), __@Core Flows: Marrow Tasker__ (F1.5 Create Task, F1.6 View Tasks, F1.7 Edit Task, F1.8 Complete Task, F1.9 Delete Task, F1.10 Reorder Tasks)
+**References**: __@Epic Brief: DoMarrow__ (Task Management — Core UI), __@Core Flows: DoMarrow__ (F1.5 Create Task, F1.6 View Tasks, F1.7 Edit Task, F1.8 Complete Task, F1.9 Delete Task, F1.10 Reorder Tasks)
 
 ## Scope
 

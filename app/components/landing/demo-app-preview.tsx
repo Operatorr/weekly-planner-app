@@ -158,7 +158,7 @@ export function DemoAppPreview() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="bg-bone rounded-[6px] px-3 py-0.5 text-[10px] text-clay max-w-[200px] w-full text-center">
-              app.marrowtasker.com
+              app.domarrow.app
             </div>
           </div>
           <div className="w-[42px]" />

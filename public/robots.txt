@@ -1,8 +1,7 @@
 User-agent: *
-Allow: /
-Allow: /pricing
 Disallow: /app/
 Disallow: /sign-in
 Disallow: /sign-up
+Disallow: /api/
 
-Sitemap: https://marrowtasker.com/sitemap.xml
+Sitemap: https://domarrow.app/sitemap.xml

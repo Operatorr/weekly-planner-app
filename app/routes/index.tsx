@@ -21,13 +21,13 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "Marrow Tasker — Your tasks, beautifully organized" },
+      { title: "DoMarrow — Your tasks, beautifully organized" },
       { name: "description", content: "A minimal, beautiful task manager for people who value focus. Plan your day, organize your week, get things done — without the clutter." },
-      { property: "og:title", content: "Marrow Tasker — Your tasks, beautifully organized" },
+      { property: "og:title", content: "DoMarrow — Your tasks, beautifully organized" },
       { property: "og:description", content: "A minimal task manager for people who value focus. Plan your day, see your week at a glance, and get things done." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Marrow Tasker — Your tasks, beautifully organized" },
+      { name: "twitter:title", content: "DoMarrow — Your tasks, beautifully organized" },
       { name: "twitter:description", content: "A minimal task manager for people who value focus. Plan your day, see your week at a glance, and get things done." },
     ],
   }),

@@ -2,9 +2,9 @@
 
 ## Overview
 
-The final ticket before launch. This ticket covers visual polish (animations, transitions, micro-interactions), comprehensive responsive design testing, performance optimization, error handling, and the actual deployment to Vercel. After this ticket, Marrow Tasker is live and accessible on the internet.
+The final ticket before launch. This ticket covers visual polish (animations, transitions, micro-interactions), comprehensive responsive design testing, performance optimization, error handling, and the actual deployment to Vercel. After this ticket, DoMarrow is live and accessible on the internet.
 
-**References**: __@Epic Brief: Marrow Tasker__ (all sections), __@Core Flows: Marrow Tasker__ (all flows — verify all work end-to-end)
+**References**: __@Epic Brief: DoMarrow__ (all sections), __@Core Flows: DoMarrow__ (all flows — verify all work end-to-end)
 
 ## Scope
 

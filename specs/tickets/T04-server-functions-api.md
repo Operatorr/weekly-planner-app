@@ -2,9 +2,9 @@
 
 ## Overview
 
-Implement all server-side functions for Marrow Tasker's CRUD operations — tasks, projects, checklists, reminders, filters, and activity logging. These server functions are called by TanStack DB mutations and also serve as the sync endpoint for ElectricSQL. After this ticket, all data operations are wired end-to-end: client mutation → server function → Neon database → sync back to client.
+Implement all server-side functions for DoMarrow's CRUD operations — tasks, projects, checklists, reminders, filters, and activity logging. These server functions are called by TanStack DB mutations and also serve as the sync endpoint for ElectricSQL. After this ticket, all data operations are wired end-to-end: client mutation → server function → Neon database → sync back to client.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Tech Stack Reference), __@Core Flows: Marrow Tasker__ (F1.5–F1.14, F2.1–F2.4)
+**References**: __@Epic Brief: DoMarrow__ (Tech Stack Reference), __@Core Flows: DoMarrow__ (F1.5–F1.14, F2.1–F2.4)
 
 ## Scope
 

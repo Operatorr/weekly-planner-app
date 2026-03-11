@@ -10,7 +10,7 @@ export function welcomeEmailHtml(data: WelcomeEmailData): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Marrow Tasker</title>
+  <title>Welcome to DoMarrow</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F9FAFB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F9FAFB; padding: 40px 20px;">
@@ -20,14 +20,14 @@ export function welcomeEmailHtml(data: WelcomeEmailData): string {
           <!-- Header -->
           <tr>
             <td style="padding: 24px 32px 16px; border-bottom: 1px solid #F3F4F6;">
-              <span style="font-size: 18px; font-weight: 600; color: #D4644A;">Marrow Tasker</span>
+              <span style="font-size: 18px; font-weight: 600; color: #D4644A;">DoMarrow</span>
             </td>
           </tr>
 
           <!-- Content -->
           <tr>
             <td style="padding: 32px 32px 24px;">
-              <h1 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: #111827;">Welcome to Marrow Tasker</h1>
+              <h1 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: #111827;">Welcome to DoMarrow</h1>
               <p style="margin: 0 0 24px; font-size: 15px; color: #4B5563; line-height: 1.6;">
                 You're all set! Here are a few tips to get the most out of your new task manager:
               </p>
@@ -63,7 +63,7 @@ export function welcomeEmailHtml(data: WelcomeEmailData): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding-top: 28px;">
                 <tr>
                   <td>
-                    <a href="${appUrl}" style="display: inline-block; padding: 12px 28px; background-color: #D4644A; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500;">Open Marrow Tasker</a>
+                    <a href="${appUrl}" style="display: inline-block; padding: 12px 28px; background-color: #D4644A; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500;">Open DoMarrow</a>
                   </td>
                 </tr>
               </table>
@@ -74,7 +74,7 @@ export function welcomeEmailHtml(data: WelcomeEmailData): string {
           <tr>
             <td style="padding: 16px 32px 24px; border-top: 1px solid #F3F4F6;">
               <p style="margin: 0; font-size: 12px; color: #9CA3AF; line-height: 1.5;">
-                You're receiving this because you signed up for Marrow Tasker.
+                You're receiving this because you signed up for DoMarrow.
               </p>
             </td>
           </tr>
@@ -86,4 +86,4 @@ export function welcomeEmailHtml(data: WelcomeEmailData): string {
 </html>`;
 }
 
-export const WELCOME_EMAIL_SUBJECT = "Welcome to Marrow Tasker";
+export const WELCOME_EMAIL_SUBJECT = "Welcome to DoMarrow";

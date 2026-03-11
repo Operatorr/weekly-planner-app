@@ -2,9 +2,9 @@
 
 ## Overview
 
-Implement three secondary features that complete the Marrow Tasker MVP experience: Quick Find (instant search across tasks and projects), Filter Views (saved search configurations), and Activity History (chronological log of user actions). These features add polish and power-user capabilities that distinguish Marrow Tasker from a basic to-do app.
+Implement three secondary features that complete the DoMarrow MVP experience: Quick Find (instant search across tasks and projects), Filter Views (saved search configurations), and Activity History (chronological log of user actions). These features add polish and power-user capabilities that distinguish DoMarrow from a basic to-do app.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Filter Views, Activity History features), __@Core Flows: Marrow Tasker__ (F3.2 Quick Find, F2.3 Filter Views, F2.4 Activity History)
+**References**: __@Epic Brief: DoMarrow__ (Filter Views, Activity History features), __@Core Flows: DoMarrow__ (F3.2 Quick Find, F2.3 Filter Views, F2.4 Activity History)
 
 ## Scope
 

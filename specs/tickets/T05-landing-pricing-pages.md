@@ -2,16 +2,16 @@
 
 ## Overview
 
-Build the public-facing marketing pages for Marrow Tasker — a compelling landing page that converts visitors to sign-ups, and a pricing page that clearly presents the Free and Pro tiers (with Pro disabled as "Coming Soon"). These pages establish the brand identity and serve as the entry point for all users. The design should be clean, minimal, and Things-inspired — lots of whitespace, elegant typography, and subtle animations.
+Build the public-facing marketing pages for DoMarrow — a compelling landing page that converts visitors to sign-ups, and a pricing page that clearly presents the Free and Pro tiers (with Pro disabled as "Coming Soon"). These pages establish the brand identity and serve as the entry point for all users. The design should be clean, minimal, and Things-inspired — lots of whitespace, elegant typography, and subtle animations.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Landing Page, Pricing Page sections), __@Core Flows: Marrow Tasker__ (F1.15 Landing Page, F1.16 Pricing Page)
+**References**: __@Epic Brief: DoMarrow__ (Landing Page, Pricing Page sections), __@Core Flows: DoMarrow__ (F1.15 Landing Page, F1.16 Pricing Page)
 
 ## Scope
 
 ### In Scope
 
 1. **Shared Navigation** (__@src/components/marketing/navbar.tsx__)
-   * Logo ("Marrow Tasker" or logo mark) on the left
+   * Logo ("DoMarrow" or logo mark) on the left
    * Nav links: Features (anchor scroll), Pricing (links to `/pricing`)
    * Auth buttons: "Sign In" (ghost button), "Get Started Free" (primary button)
    * Sticky header with subtle backdrop blur on scroll
@@ -26,7 +26,7 @@ Build the public-facing marketing pages for Marrow Tasker — a compelling landi
      - "Never Forget" — Timely reminders via email and calendar
    * **How It Works Section** (optional): 3-step visual guide (Add tasks → Organize your week → Get it done)
    * **Final CTA Section**: "Ready to get organized?" with sign-up button
-   * **Footer**: Logo, nav links (About, Pricing, Privacy, Terms), copyright "© 2026 Marrow Tasker"
+   * **Footer**: Logo, nav links (About, Pricing, Privacy, Terms), copyright "© 2026 DoMarrow"
 
 3. **Pricing Page** (__@src/routes/pricing.tsx__)
    * **Pricing Header**: "Simple, transparent pricing" headline

@@ -4,7 +4,7 @@
 
 Build the authenticated application shell — the layout wrapper that all `/app/*` pages live inside. This includes the top header bar, collapsible sidebar (Things-style "Slim Mode"), project tab bar, and the main content area. After this ticket, the app has a polished navigation structure that users interact with on every page.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Task Management — Core UI), __@Core Flows: Marrow Tasker__ (F3.1 App Navigation Structure, F1.12 Switch Projects)
+**References**: __@Epic Brief: DoMarrow__ (Task Management — Core UI), __@Core Flows: DoMarrow__ (F3.1 App Navigation Structure, F1.12 Switch Projects)
 
 ## Scope
 
@@ -17,7 +17,7 @@ Build the authenticated application shell — the layout wrapper that all `/app/
 
 2. **Header Bar** (__@src/components/app/header.tsx__)
    * Left: Sidebar toggle button (hamburger/collapse icon)
-   * Center-left: Logo or app name "Marrow Tasker" (links to `/app`)
+   * Center-left: Logo or app name "DoMarrow" (links to `/app`)
    * Center: Quick Find trigger button (search icon + "Cmd+K" hint text)
    * Right-center: Sync status indicator — small dot (green = synced, yellow = syncing, red = offline) with tooltip showing status text
    * Right: Profile avatar with Clerk `<UserButton />` or custom dropdown (see F1.3)

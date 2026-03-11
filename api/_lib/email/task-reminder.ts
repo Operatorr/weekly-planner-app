@@ -52,7 +52,7 @@ export function taskReminderHtml(data: TaskReminderData): string {
           <!-- Header -->
           <tr>
             <td style="padding: 24px 32px 16px; border-bottom: 1px solid #F3F4F6;">
-              <span style="font-size: 18px; font-weight: 600; color: #D4644A;">Marrow Tasker</span>
+              <span style="font-size: 18px; font-weight: 600; color: #D4644A;">DoMarrow</span>
             </td>
           </tr>
 
@@ -75,7 +75,7 @@ export function taskReminderHtml(data: TaskReminderData): string {
                 ${checklistSection}
                 <tr>
                   <td style="padding: 16px 0 0;">
-                    <a href="${taskUrl}" style="display: inline-block; padding: 10px 24px; background-color: #D4644A; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">Open in Marrow Tasker</a>
+                    <a href="${taskUrl}" style="display: inline-block; padding: 10px 24px; background-color: #D4644A; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">Open in DoMarrow</a>
                   </td>
                 </tr>
               </table>
@@ -86,7 +86,7 @@ export function taskReminderHtml(data: TaskReminderData): string {
           <tr>
             <td style="padding: 16px 32px 24px; border-top: 1px solid #F3F4F6;">
               <p style="margin: 0; font-size: 12px; color: #9CA3AF; line-height: 1.5;">
-                You're receiving this because you set a reminder in Marrow Tasker.
+                You're receiving this because you set a reminder in DoMarrow.
               </p>
             </td>
           </tr>

@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = neon(process.env.DATABASE_URL!);
-  const appUrl = process.env.APP_URL ?? "https://marrowtasker.com";
+  const appUrl = process.env.APP_URL ?? "https://domarrow.app";
 
   try {
     // Fetch due reminders that haven't been sent yet

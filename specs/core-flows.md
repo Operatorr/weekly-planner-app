@@ -1,14 +1,14 @@
-# Core Flows: Marrow Tasker
+# Core Flows: DoMarrow
 
 ## Overview
 
-This document maps every user flow required for the Marrow Tasker MVP. Flows are organized by priority:
+This document maps every user flow required for the DoMarrow MVP. Flows are organized by priority:
 
 - **Priority 1**: Core functionality that must work flawlessly — authentication, task CRUD, project management, and the four-section task view. These flows receive comprehensive testing with edge cases.
 - **Priority 2**: Important but secondary — reminders, filters, activity history, landing/pricing pages. Happy path coverage.
 - **Supporting**: Nice-to-have polish — animations, keyboard shortcuts, drag-and-drop refinements. Happy path only.
 
-References: __@Epic Brief: Marrow Tasker__
+References: __@Epic Brief: DoMarrow__
 
 ---
 
@@ -414,7 +414,7 @@ References: __@Epic Brief: Marrow Tasker__
 
 1. Visitor arrives at the landing page.
 2. Page displays (above the fold):
-   - Navigation bar: Logo ("Marrow Tasker"), nav links (Features, Pricing, Sign In), CTA button ("Get Started Free").
+   - Navigation bar: Logo ("DoMarrow"), nav links (Features, Pricing, Sign In), CTA button ("Get Started Free").
    - Hero section: Headline, subheadline describing the value proposition, hero image/illustration of the app, primary CTA ("Get Started Free"), secondary CTA ("See Pricing").
 3. Page displays (below the fold):
    - Features section: 3-4 feature highlights with icons/illustrations (Smart Quick Add, Flexible Layouts, Weekly Planning, Task Reminders).
@@ -479,7 +479,7 @@ References: __@Epic Brief: Marrow Tasker__
 5. TanStack DB syncs to Neon.
 6. A server-side scheduled job checks for due reminders.
 7. When reminder time arrives, system sends an email via Resend to the user's email address.
-8. Email contains: task name, description preview, due date, and a link to open the task in Marrow Tasker.
+8. Email contains: task name, description preview, due date, and a link to open the task in DoMarrow.
 
 **Exit**: Reminder is saved and will fire at the specified time.
 

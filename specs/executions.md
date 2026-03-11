@@ -1,4 +1,4 @@
-# Marrow Tasker — Execution Tracker
+# DoMarrow — Execution Tracker
 
 > **Architecture note**: The project was scaffolded as a **Vite + TanStack Router SPA**, not TanStack Start SSR as originally spec'd. Impacts:
 > - T03: Use `@clerk/react` (not `@clerk/tanstack-start`)

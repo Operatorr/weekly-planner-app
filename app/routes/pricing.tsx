@@ -12,13 +12,13 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
   head: () => ({
     meta: [
-      { title: "Pricing — Marrow Tasker" },
-      { name: "description", content: "Simple, transparent pricing for Marrow Tasker. Start free, upgrade when you need more. No surprises, no hidden fees." },
-      { property: "og:title", content: "Pricing — Marrow Tasker" },
+      { title: "Pricing — DoMarrow" },
+      { name: "description", content: "Simple, transparent pricing for DoMarrow. Start free, upgrade when you need more. No surprises, no hidden fees." },
+      { property: "og:title", content: "Pricing — DoMarrow" },
       { property: "og:description", content: "Start free, upgrade when you need more. Simple, transparent pricing with no hidden fees." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Pricing — Marrow Tasker" },
+      { name: "twitter:title", content: "Pricing — DoMarrow" },
       { name: "twitter:description", content: "Start free, upgrade when you need more. Simple, transparent pricing with no hidden fees." },
     ],
   }),

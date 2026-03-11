@@ -2,9 +2,9 @@
 
 ## Overview
 
-Set up the Neon PostgreSQL database with the complete schema for Marrow Tasker, configure TanStack DB collections on the client, and establish the ElectricSQL sync layer between them. After this ticket, the app has a reactive, local-first data layer that syncs with a serverless PostgreSQL database — the backbone for all task and project operations.
+Set up the Neon PostgreSQL database with the complete schema for DoMarrow, configure TanStack DB collections on the client, and establish the ElectricSQL sync layer between them. After this ticket, the app has a reactive, local-first data layer that syncs with a serverless PostgreSQL database — the backbone for all task and project operations.
 
-**References**: __@Epic Brief: Marrow Tasker__ (Tech Stack Reference), __@Core Flows: Marrow Tasker__ (F1.5 through F1.14, F2.1–F2.4)
+**References**: __@Epic Brief: DoMarrow__ (Tech Stack Reference), __@Core Flows: DoMarrow__ (F1.5 through F1.14, F2.1–F2.4)
 
 ## Scope
 
