@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useUser } from "@clerk/react";
 
 /**
- * Provisions a new user record + default "Personal" project on first sign-in.
+ * Provisions a new user record on first sign-in.
  * Calls POST /api/users/provision — the API is idempotent (skips if user exists).
  */
 export function useProvisionUser() {

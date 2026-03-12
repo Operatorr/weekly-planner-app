@@ -15,6 +15,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as DevErrorRouteImport } from './routes/dev.error'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 
@@ -48,6 +49,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const DevErrorRoute = DevErrorRouteImport.update({
+  id: '/dev/error',
+  path: '/dev/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/app/activity': typeof AppActivityRoute
   '/app/settings': typeof AppSettingsRoute
+  '/dev/error': typeof DevErrorRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/app/activity': typeof AppActivityRoute
   '/app/settings': typeof AppSettingsRoute
+  '/dev/error': typeof DevErrorRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/app/activity': typeof AppActivityRoute
   '/app/settings': typeof AppSettingsRoute
+  '/dev/error': typeof DevErrorRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/app/activity'
     | '/app/settings'
+    | '/dev/error'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/app/activity'
     | '/app/settings'
+    | '/dev/error'
     | '/app'
   id:
     | '__root__'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/app/activity'
     | '/app/settings'
+    | '/dev/error'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  DevErrorRoute: typeof DevErrorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/dev/error': {
+      id: '/dev/error'
+      path: '/dev/error'
+      fullPath: '/dev/error'
+      preLoaderRoute: typeof DevErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/settings': {
       id: '/app/settings'
       path: '/settings'
@@ -212,6 +232,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  DevErrorRoute: DevErrorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

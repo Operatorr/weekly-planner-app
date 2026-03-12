@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSettings, type AppSettings } from "@/lib/settings-context";
+import { useProjects } from "@/hooks/use-projects";
 import { cn } from "@/lib/utils";
 import {
   FormInput,
@@ -184,6 +185,7 @@ const sections: { id: SettingsSection; label: string; icon: React.ReactNode }[] 
 
 function SettingsPage() {
   const { settings, updateSetting, resetSettings } = useSettings();
+  const { data: projects = [] } = useProjects();
   const [activeSection, setActiveSection] = useState<SettingsSection>("form");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -306,14 +308,14 @@ function SettingsPage() {
 
             <SettingRow
               label="Default project"
-              description="Pre-select a project when creating tasks."
+              description="Pre-select a project when creating tasks from the All view."
             >
-              <SegmentedControl
+              <Select
                 value={settings.defaultProject}
                 onChange={(v) => update("defaultProject", v)}
                 options={[
                   { value: "none", label: "None" },
-                  { value: "current", label: "Current" },
+                  ...projects.map((p) => ({ value: p.id, label: p.name })),
                 ]}
               />
             </SettingRow>

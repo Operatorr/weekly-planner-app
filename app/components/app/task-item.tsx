@@ -20,6 +20,7 @@ import {
   Archive,
   Sun,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { gsap } from "@/lib/gsap-config";
 import { easings } from "@/lib/animation-presets";
@@ -58,6 +59,7 @@ export function TaskItem({
   const { settings } = useSettings();
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
   const checkboxRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
@@ -129,7 +131,7 @@ export function TaskItem({
 
   const dateBadgeVariant = task.due_date
     ? isPast(task.due_date) && !isToday(task.due_date)
-      ? "destructive"
+      ? (settings.highlightOverdueTasks ? "destructive" : "default")
       : isToday(task.due_date)
         ? "sky"
         : "default"
@@ -246,7 +248,7 @@ export function TaskItem({
         </div>
 
         {/* Metadata row */}
-        {!compact && (task.is_someday || (task.due_date && dateBadgeVariant) || checklistProgress || (showProject && project)) && (
+        {!compact && (task.is_someday || (task.due_date && dateBadgeVariant) || checklistProgress || (showProject && project) || task.description) && (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {task.is_someday && (
               <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-clay/10 text-clay">
@@ -272,8 +274,58 @@ export function TaskItem({
                 {project.name}
               </span>
             )}
+            {task.description && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDescExpanded((v) => !v);
+                }}
+                className="flex items-center gap-1 text-[10px] text-clay hover:text-ink-muted transition-colors cursor-pointer"
+              >
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className={cn(
+                    "transition-transform duration-200",
+                    descExpanded && "rotate-90"
+                  )}
+                >
+                  <path
+                    d="M6 4L10 8L6 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="max-w-[140px] truncate">
+                  {task.description.length > 40
+                    ? task.description.slice(0, 40) + "…"
+                    : task.description}
+                </span>
+              </button>
+            )}
           </div>
         )}
+
+        {/* Expandable description */}
+        <AnimatePresence initial={false}>
+          {descExpanded && task.description && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+              className="overflow-hidden"
+            >
+              <p className="text-[11px] leading-relaxed text-clay mt-1.5 whitespace-pre-line break-words">
+                {task.description}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Context menu / Actions */}

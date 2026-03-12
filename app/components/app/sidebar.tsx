@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskContext, normalizeDate } from "@/lib/task-context";
+import { useSettings } from "@/lib/settings-context";
 import { useDroppable } from "@dnd-kit/core";
 import { ColorPicker } from "@/components/app/color-picker";
 import type { Project } from "@/lib/types";
@@ -61,6 +62,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { mutate: updateProject } = useUpdateProject();
   const { mutate: deleteProject } = useDeleteProject();
   const { tasks } = useTaskContext();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   // State for inline editing
@@ -131,11 +133,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const topNavItems: NavItem[] = useMemo(
     () => [
       { id: "inbox", label: "Inbox", icon: <Inbox size={18} /> },
-      { id: "today", label: "Today", icon: <Sun size={18} />, badge: todayTaskCount || undefined },
+      { id: "today", label: "Today", icon: <Sun size={18} />, badge: settings.showTaskCountBadges ? (todayTaskCount || undefined) : undefined },
       { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} /> },
       { id: "someday", label: "Someday", icon: <Archive size={18} /> },
     ],
-    [todayTaskCount]
+    [todayTaskCount, settings.showTaskCountBadges]
   );
 
   return (

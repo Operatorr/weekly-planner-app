@@ -33,7 +33,6 @@ Integrate Clerk for authentication across DoMarrow — sign-up, sign-in, sign-ou
 4. **User Provisioning** (__@src/server/auth/provision.ts__)
    * Clerk webhook or post-sign-up hook to create user record in Neon database
    * Set default tier to "free"
-   * Create default "Personal" project for new users
    * Handle edge case: user exists in Clerk but not in Neon (re-provision)
 
 5. **User Profile UI** (__@src/components/user-menu.tsx__)
@@ -54,7 +53,7 @@ Integrate Clerk for authentication across DoMarrow — sign-up, sign-in, sign-ou
 * `/sign-up` renders a styled sign-up form that creates accounts with email verification
 * Email verification emails are sent via Resend and work end-to-end
 * `/sign-in` renders a styled sign-in form that authenticates users
-* After sign-up, a user record is created in Neon with tier="free" and a default "Personal" project
+* After sign-up, a user record is created in Neon with tier="free"
 * All `/app/*` routes redirect to `/sign-in` for unauthenticated users
 * Public routes (`/`, `/pricing`, `/sign-in`, `/sign-up`) are accessible without authentication
 * Profile dropdown shows user info and a working "Sign Out" button

@@ -27,13 +27,35 @@ export function AddTask() {
   // Get the default project for the current context (null when viewing "all")
   const getDefaultProject = () => (activeProject !== "all" ? activeProject : null);
 
-  // When form expands, focus input and set default project based on active view
+  // Compute the default due date from settings
+  const getDefaultDueDate = (): string | null => {
+    if (settings.defaultDueDate === "today") {
+      return new Date().toISOString().split("T")[0];
+    }
+    if (settings.defaultDueDate === "tomorrow") {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split("T")[0];
+    }
+    return null;
+  };
+
+  // When form expands, focus input and set defaults
   useEffect(() => {
     if (expanded) {
       inputRef.current?.focus();
-      // Set project to active project only if viewing a specific project
+      // Set project: use active project if viewing one, otherwise fall back to settings default
       if (projectId === null) {
-        setProjectId(getDefaultProject());
+        const contextProject = getDefaultProject();
+        if (contextProject) {
+          setProjectId(contextProject);
+        } else if (settings.defaultProject !== "none") {
+          setProjectId(settings.defaultProject);
+        }
+      }
+      // Set due date from settings if not already set
+      if (dueDate === null) {
+        setDueDate(getDefaultDueDate());
       }
     }
   }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -54,9 +76,12 @@ export function AddTask() {
   const resetForm = (keepProject = false, keepDate = false) => {
     setTitle("");
     setDescription("");
-    if (!keepDate) setDueDate(null);
+    if (!keepDate) setDueDate(getDefaultDueDate());
     setReminder({ type: "none" });
-    if (!keepProject) setProjectId(getDefaultProject());
+    if (!keepProject) {
+      const contextProject = getDefaultProject();
+      setProjectId(contextProject || (settings.defaultProject !== "none" ? settings.defaultProject : null));
+    }
   };
 
   const handleSubmit = () => {
@@ -111,7 +136,7 @@ export function AddTask() {
             <Plus size={14} strokeWidth={2.5} />
           </div>
           <span className="text-sm">Add a task&#8230;</span>
-          <kbd className="ml-auto hidden sm:inline text-[10px] text-clay bg-bone rounded px-1.5 py-0.5 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+          <kbd className="ml-auto hidden sm:inline text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
             N
           </kbd>
         </button>
@@ -164,24 +189,34 @@ export function AddTask() {
 
           {/* Footer */}
           <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle bg-bone/30">
-            <button
-              onClick={() => {
-                setExpanded(false);
-                resetForm(false, false);
-              }}
-              className="text-xs text-ink-muted hover:text-ink transition-colors"
-            >
-              Cancel
-            </button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleSubmit}
-              disabled={!title.trim()}
-              className="h-7 px-3 text-xs"
-            >
-              Add Task
-            </Button>
+            <div className="flex items-center gap-2">
+              <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+                Esc
+              </kbd>
+              <button
+                onClick={() => {
+                  setExpanded(false);
+                  resetForm(false, false);
+                }}
+                className="text-xs text-ink-muted hover:text-ink transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+                ↵
+              </kbd>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSubmit}
+                disabled={!title.trim()}
+                className="h-7 px-3 text-xs"
+              >
+                Add Task
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -38,7 +38,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
-  const [dueDate, setDueDate] = useState<string | null>(task.due_date);
+  const [dueDate, setDueDate] = useState<string | null>(task.due_date ? task.due_date.split("T")[0] : null);
   const [isSomeday, setIsSomeday] = useState(task.is_someday || false);
   const [projectId, setProjectId] = useState(task.project_id);
   const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
@@ -154,13 +154,18 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           <span className="text-xs text-clay font-medium tracking-wider uppercase">
             Task Details
           </span>
-          <button
-            onClick={onClose}
-            aria-label="Close task details"
-            className="w-7 h-7 rounded-[6px] flex items-center justify-center text-clay hover:text-ink hover:bg-bone transition-colors"
-          >
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2">
+            <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+              Esc
+            </kbd>
+            <button
+              onClick={onClose}
+              aria-label="Close task details"
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-clay hover:text-ink hover:bg-bone transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

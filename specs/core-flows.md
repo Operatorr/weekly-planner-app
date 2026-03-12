@@ -28,11 +28,10 @@ References: __@Epic Brief: DoMarrow__
 4. User clicks the verification link in their email.
 5. Clerk confirms email verification and creates the user session.
 6. System creates a corresponding user record in Neon database with Free tier defaults (1 project limit, 1 filter view, 1-week activity history).
-7. System creates a default "Personal" project for the user.
-8. User is redirected to the Task Management page (`/app`) with their default project active.
-9. System displays a brief welcome tooltip or onboarding hint: "Add your first task above."
+7. User is redirected to the Task Management page (`/app`).
+8. System displays a brief welcome tooltip or onboarding hint: "Add your first task above."
 
-**Exit**: User is authenticated, has a default project, and sees the empty Task Management page ready for input.
+**Exit**: User is authenticated and sees the empty Task Management page ready for input.
 
 **Variations**:
 - Social auth (Google/GitHub) → skip email verification step, proceed from step 5
@@ -327,7 +326,7 @@ References: __@Epic Brief: DoMarrow__
 - Free tier user with 1 project already → show upgrade prompt: "Free plan allows 1 project. Upgrade to Pro for up to 300 projects." (with disabled upgrade button since Pro is not yet available — show "Coming Soon" instead)
 - Escape pressed during naming → cancel project creation, remove the tab
 
-**Note**: Free tier allows 1 personal project. The default "Personal" project counts as this 1 project. Users cannot create additional projects on Free tier.
+**Note**: Free tier allows 1 project. Users cannot create additional projects on Free tier.
 
 ---
 
@@ -397,7 +396,6 @@ References: __@Epic Brief: DoMarrow__
 
 **Variations**:
 - Cancel confirmation → nothing happens
-- Deleting the default "Personal" project → not allowed, show message: "The default project cannot be deleted."
 - Deleting last remaining project → redirect to "All" tab (which will be empty)
 
 ---

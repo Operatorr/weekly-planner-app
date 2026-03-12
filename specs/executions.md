@@ -53,7 +53,7 @@ Each ticket below links to its full spec in [`specs/tickets/`](tickets/) and the
 - [ ] `/sign-in` route with `<SignIn />` component
 - [ ] `/sign-up` route with `<SignUp />` component
 - [ ] Route guard on `/app` layout — redirect unauthenticated users to `/sign-in`
-- [ ] User provisioning on first sign-in: create Neon `users` record + default "Personal" project
+- [ ] User provisioning on first sign-in: create Neon `users` record
 - [ ] Replace static profile avatar in `header.tsx` with Clerk `<UserButton />`
 - [ ] Sign-out clears local query cache and redirects to `/`
 - [ ] Update `navbar.tsx` CTAs: "Sign In" → `/sign-in`, "Get Started Free" → `/sign-up`

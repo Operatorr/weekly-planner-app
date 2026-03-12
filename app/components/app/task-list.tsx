@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import type { Task, Project } from "@/lib/types";
 import { isPast } from "@/lib/task-context";
 import { useTaskContext } from "@/lib/task-context";
+import { useSettings } from "@/lib/settings-context";
 import { TaskItem } from "@/components/app/task-item";
 import { TaskDetail } from "@/components/app/task-detail";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function TaskList({
   showProject = false,
 }: TaskListProps) {
   const { completeTask, uncompleteTask, deleteTask, updateTask, getChecklist } = useTaskContext();
+  const { settings } = useSettings();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
@@ -186,7 +188,7 @@ export function TaskList({
       </SortableContext>
 
       {/* Completed tasks toggle */}
-      {completedTasks.length > 0 && (
+      {settings.showCompletedTasks && completedTasks.length > 0 && (
         <div className="mt-3 px-5">
           <button
             onClick={() => setShowCompleted(!showCompleted)}

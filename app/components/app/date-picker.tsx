@@ -22,7 +22,7 @@ export function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedDate = value ? new Date(value + "T12:00:00") : undefined;
+  const selectedDate = value ? new Date(value.split("T")[0] + "T12:00:00") : undefined;
 
   const handleSelect = (date: Date | undefined) => {
     if (date) {

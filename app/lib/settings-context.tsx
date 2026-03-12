@@ -9,7 +9,7 @@ export interface AppSettings {
 
   // Defaults
   defaultView: "today" | "inbox" | "upcoming" | "someday";
-  defaultProject: "none" | "current";
+  defaultProject: string; // "none" or a project ID
   defaultDueDate: "none" | "today" | "tomorrow";
 
   // Display
