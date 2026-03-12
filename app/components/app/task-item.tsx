@@ -277,7 +277,7 @@ export function TaskItem({
             {task.due_date && dateBadgeVariant && (
               <Badge variant={dateBadgeVariant} className="text-[10px] py-0 px-1.5">
                 <CalendarDays size={10} className="mr-1" />
-                {formatDate(task.due_date)}
+                {formatDate(task.due_date, settings.dateFormat)}
               </Badge>
             )}
             {checklistProgress && (
@@ -385,6 +385,9 @@ export function TaskItem({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
+                if (settings.soundOnComplete) {
+                  playTaskCompleteSound();
+                }
                 onToggle?.(task.id);
               }}
             >

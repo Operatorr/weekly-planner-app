@@ -5,6 +5,7 @@ import { useTaskContext } from "@/lib/task-context";
 import { TaskDetail } from "@/components/app/task-detail";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSettings } from "@/lib/settings-context";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -136,8 +137,9 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const { tasks: allTasks } = useTaskContext();
-  const weekDays = getWeekDays(weekOffset);
-  const weekRange = getWeekRange(weekOffset);
+  const { settings } = useSettings();
+  const weekDays = getWeekDays(weekOffset, settings.weekStartsOn);
+  const weekRange = getWeekRange(weekOffset, settings.weekStartsOn);
 
   // Sync selectedTask with latest data
   const currentSelectedTask = selectedTask

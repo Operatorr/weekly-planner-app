@@ -72,41 +72,53 @@ export function isBeyondThisWeek(dateStr: string): boolean {
   return normalizeDate(dateStr) > endOfWeekStr();
 }
 
-export function getWeekDays(weekOffset = 0): { label: string; date: string; isToday: boolean }[] {
+export function getWeekDays(weekOffset = 0, weekStartsOn: "sunday" | "monday" = "monday"): { label: string; date: string; isToday: boolean }[] {
   const today = todayStr();
   const d = new Date();
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day) + weekOffset * 7;
-  const mon = new Date(d);
-  mon.setDate(mon.getDate() + diff);
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((label, i) => {
-    const dd = new Date(mon);
+  const dow = d.getDay(); // 0=Sun, 1=Mon, ...
+  const startDay = weekStartsOn === "sunday" ? 0 : 1;
+  const diff = -((dow - startDay + 7) % 7) + weekOffset * 7;
+  const start = new Date(d);
+  start.setDate(start.getDate() + diff);
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return Array.from({ length: 7 }, (_, i) => {
+    const dd = new Date(start);
     dd.setDate(dd.getDate() + i);
     const dateStr = localDateStr(dd);
+    const label = dayLabels[dd.getDay()];
     return { label: `${label} ${dd.getDate()}`, date: dateStr, isToday: dateStr === today };
   });
 }
 
-export function getWeekRange(weekOffset = 0): string {
+export function getWeekRange(weekOffset = 0, weekStartsOn: "sunday" | "monday" = "monday"): string {
   const d = new Date();
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day) + weekOffset * 7;
-  const mon = new Date(d);
-  mon.setDate(mon.getDate() + diff);
-  const sun = new Date(mon);
-  sun.setDate(sun.getDate() + 6);
+  const dow = d.getDay();
+  const startDay = weekStartsOn === "sunday" ? 0 : 1;
+  const diff = -((dow - startDay + 7) % 7) + weekOffset * 7;
+  const start = new Date(d);
+  start.setDate(start.getDate() + diff);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
   const fmt = (dt: Date) =>
     dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${fmt(mon)} – ${fmt(sun)}`;
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, mode: "relative" | "absolute" = "relative"): string {
   const normalized = normalizeDate(dateStr);
+  const d = new Date(normalized + "T12:00:00");
+  const currentYear = new Date().getFullYear();
+  const dateYear = d.getFullYear();
+  if (mode === "absolute") {
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      ...(dateYear !== currentYear && { year: "numeric" }),
+    });
+  }
   if (isToday(normalized)) return "Today";
   if (normalized === dateOffset(-1)) return "Yesterday";
   if (normalized === dateOffset(1)) return "Tomorrow";
-  const d = new Date(normalized + "T12:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 

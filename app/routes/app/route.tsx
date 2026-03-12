@@ -14,7 +14,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useProvisionUser } from "@/hooks/use-provision-user";
 import { TaskProvider } from "@/lib/task-context";
 import { ProjectProvider } from "@/lib/project-context";
-import { SettingsProvider } from "@/lib/settings-context";
+import { SettingsProvider, useSettings } from "@/lib/settings-context";
 import { useFilters, useCreateFilter, useUpdateFilter, useDeleteFilter } from "@/hooks/use-filters";
 import { useUserTier } from "@/hooks/use-user-tier";
 
@@ -77,10 +77,31 @@ function ProjectTabsConditional() {
 function AppLayout() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect unauthenticated users to /sign-in
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate({ to: "/sign-in" });
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  if (!isLoaded || !isSignedIn) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <SettingsProvider>
+      <AppLayoutInner />
+    </SettingsProvider>
+  );
+}
+
+function AppLayoutInner() {
+  const { settings } = useSettings();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeProject, setActiveProject] = useState("all");
-  const [activeView, setActiveView] = useState("today");
+  const [activeView, setActiveView] = useState(settings.defaultView);
   const [quickFindOpen, setQuickFindOpen] = useState(false);
   const [quickFindTask, setQuickFindTask] = useState<Task | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -169,20 +190,7 @@ function AppLayout() {
     onFocusAddTask: handleFocusAddTask,
   });
 
-  // Redirect unauthenticated users to /sign-in
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      navigate({ to: "/sign-in" });
-    }
-  }, [isLoaded, isSignedIn, navigate]);
-
-  // Show nothing while Clerk loads or if not signed in (redirecting)
-  if (!isLoaded || !isSignedIn) {
-    return <LoadingScreen />;
-  }
-
   return (
-    <SettingsProvider>
     <ProjectProvider>
       <TaskProvider>
         <AppContext.Provider
@@ -251,6 +259,5 @@ function AppLayout() {
         </AppContext.Provider>
       </TaskProvider>
     </ProjectProvider>
-    </SettingsProvider>
   );
 }

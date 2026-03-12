@@ -66,56 +66,35 @@ const mockActivity: ActivityEntry[] = [
     createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: "a4",
-    type: "task_created",
-    description: "Created task",
-    entityName: "Buy groceries for the week",
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-  {
     id: "a5",
     type: "project_created",
     description: "Created project",
     entityName: "Personal",
     createdAt: dateOffset(-1),
   },
+  // Older entries (beyond 7 days — locked for free tier)
   {
     id: "a6",
     type: "task_created",
     description: "Created task",
-    entityName: "Research best journaling apps for inspiration",
-    createdAt: dateOffset(-2),
+    entityName: "Buy groceries for the week",
+    createdAt: dateOffset(-8),
   },
   {
     id: "a7",
-    type: "task_created",
-    description: "Created task",
-    entityName: "Organize bookmarks into folders",
-    createdAt: dateOffset(-3),
-  },
-  {
-    id: "a8",
     type: "task_edited",
     description: "Edited task",
     entityName: "Update portfolio website bio",
     detail: "Added description",
-    createdAt: dateOffset(-4),
+    createdAt: dateOffset(-9),
   },
   {
-    id: "a9",
+    id: "a8",
     type: "task_created",
     description: "Created task",
     entityName: "Call dentist for appointment",
-    createdAt: dateOffset(-5),
+    createdAt: dateOffset(-10),
   },
-  {
-    id: "a10",
-    type: "task_deleted",
-    description: "Deleted task",
-    entityName: "Old task that was removed",
-    createdAt: dateOffset(-6),
-  },
-  // Older entries (beyond 7 days — locked for free tier)
   {
     id: "a11",
     type: "task_completed",
@@ -259,7 +238,7 @@ function ActivityHistory() {
           <div className="relative">
             {/* Blurred locked entries */}
             <div className="space-y-1 blur-[2px] select-none pointer-events-none opacity-50">
-              {olderEntries.slice(0, 3).map((entry) => (
+              {olderEntries.slice(0, 6).map((entry) => (
                 <div
                   key={entry.id}
                   className="flex items-start gap-3 px-3 py-3 rounded-[10px]"
@@ -291,13 +270,11 @@ function ActivityHistory() {
                   <Lock size={16} className="text-amber" />
                 </div>
                 <h3 className="text-sm font-semibold text-ink mb-1">
-                  {olderEntries.length} more{" "}
-                  {olderEntries.length === 1 ? "entry" : "entries"} from
-                  previous weeks
+                  Activity history is a Pro feature
                 </h3>
                 <p className="text-xs text-ink-muted mb-4 leading-relaxed">
-                  Free accounts include 7 days of activity history. Upgrade to
-                  Pro for unlimited history.
+                  Upgrade to Pro to unlock your full activity history and track
+                  everything you've done across tasks and projects.
                 </p>
                 <Button variant="primary" size="sm" className="w-full gap-2">
                   <Sparkles size={14} />

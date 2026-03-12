@@ -114,11 +114,13 @@ function SettingRow({
   description,
   children,
   indent,
+  badge,
 }: {
   label: string;
   description?: string;
   children: React.ReactNode;
   indent?: boolean;
+  badge?: React.ReactNode;
 }) {
   return (
     <div
@@ -128,8 +130,9 @@ function SettingRow({
       )}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-ink leading-tight">
+        <p className="text-sm text-ink leading-tight flex items-center gap-1.5">
           {label}
+          {badge}
         </p>
         {description && (
           <p className="text-xs text-clay mt-0.5 leading-snug">{description}</p>
@@ -168,6 +171,14 @@ function PlanBadge() {
   return (
     <span className="text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber/15 text-amber-700 border border-amber/20">
       Soon
+    </span>
+  );
+}
+
+function ProBadge() {
+  return (
+    <span className="text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-ember/10 text-ember border border-ember/20">
+      Pro
     </span>
   );
 }
@@ -340,6 +351,7 @@ function SettingsPage() {
             <SettingRow
               label="Default reminder type"
               description="Pre-select a reminder method when creating tasks."
+              badge={<ProBadge />}
             >
               <Select
                 value={settings.defaultReminderType}
@@ -407,7 +419,7 @@ function SettingsPage() {
           <Section icon={<Monitor size={16} />} title="Date & Time">
             <SettingRow
               label="Date format"
-              description="How dates are shown throughout the app."
+              description='Relative shows "Tomorrow" or "in 3 days". Absolute shows "Mar 15".'
             >
               <SegmentedControl
                 value={settings.dateFormat}
