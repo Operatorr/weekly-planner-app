@@ -465,6 +465,49 @@ button, a, [role="button"], input, textarea, select {
   touch-action: manipulation;
 }
 
+/* ─── AI Dictate Animations ─── */
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0;   }
+}
+
+@keyframes spin-slow {
+  0%   { transform: rotate(0deg)   scale(1);    opacity: 1; }
+  50%  { transform: rotate(180deg) scale(1.15); opacity: 0.7; }
+  100% { transform: rotate(360deg) scale(1);    opacity: 1; }
+}
+
+@keyframes progress-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.ai-wave-bar {
+  height: 2rem;
+  transform-origin: center;
+  animation: wave 0.9s ease-in-out infinite;
+}
+
+.ai-pulse-ring {
+  animation: pulse-ring 1.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  pointer-events: none;
+}
+
+.ai-sparkle-spin {
+  animation: spin-slow 2s var(--ease-in-out-expo) infinite;
+  display: inline-flex;
+}
+
+.ai-progress-bar {
+  animation: progress-fill 2.5s var(--ease-out-expo) forwards;
+}
+
 /* ─── GSAP Animation Utilities ─── */
 
 /* Hero highlight underline - needs transform origin for scaleX animation */

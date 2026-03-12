@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/
 import { useState, useCallback, useEffect, useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap-config";
 import { useAuth } from "@clerk/react";
-import { AppContext } from "@/lib/app-context";
+import { AppContext, type ViewType } from "@/lib/app-context";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/header";
 import { ProjectTabs } from "@/components/app/project-tabs";
@@ -101,7 +101,7 @@ function AppLayoutInner() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeProject, setActiveProject] = useState("all");
-  const [activeView, setActiveView] = useState(settings.defaultView);
+  const [activeView, setActiveView] = useState<ViewType>(settings.defaultView);
   const [quickFindOpen, setQuickFindOpen] = useState(false);
   const [quickFindTask, setQuickFindTask] = useState<Task | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -184,10 +184,15 @@ function AppLayoutInner() {
     window.dispatchEvent(new CustomEvent("marrow:focus-add-task"));
   }, []);
 
+  const handleOpenAiDictate = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("marrow:open-ai-dictate"));
+  }, []);
+
   useKeyboardShortcuts({
     onToggleSidebar: toggleSidebar,
     onQuickFind: handleQuickFind,
     onFocusAddTask: handleFocusAddTask,
+    onOpenAiDictate: handleOpenAiDictate,
   });
 
   return (

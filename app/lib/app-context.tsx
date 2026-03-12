@@ -1,6 +1,8 @@
 import { createContext, useContext } from "react";
 import type { SavedFilter, FilterConfig } from "@/components/app/filter-panel";
 
+export type ViewType = "today" | "inbox" | "upcoming" | "someday" | "activity" | "settings";
+
 export interface AppContextValue {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
@@ -8,8 +10,8 @@ export interface AppContextValue {
   setMobileSidebarOpen: (open: boolean) => void;
   activeProject: string;
   setActiveProject: (id: string) => void;
-  activeView: string;
-  setActiveView: (view: string) => void;
+  activeView: ViewType;
+  setActiveView: (view: ViewType) => void;
   quickFindOpen: boolean;
   setQuickFindOpen: (open: boolean) => void;
   filterPanelOpen: boolean;

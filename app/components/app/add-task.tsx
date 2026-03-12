@@ -8,8 +8,9 @@ import { useAppContext } from "@/lib/app-context";
 import { useSettings } from "@/lib/settings-context";
 import { useProjects } from "@/hooks/use-projects";
 import { useUserTier } from "@/hooks/use-user-tier";
-import { Plus, Archive } from "lucide-react";
+import { Plus, Archive, Mic } from "lucide-react";
 import { toast } from "sonner";
+import { AiDictate } from "@/components/app/ai-dictate";
 
 export function AddTask() {
   const { createTask } = useTaskContext();
@@ -18,6 +19,7 @@ export function AddTask() {
   const { data: projects = [] } = useProjects();
   const { data: userTier = "free" } = useUserTier();
   const [expanded, setExpanded] = useState(false);
+  const [aiMode, setAiMode] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
@@ -76,6 +78,16 @@ export function AddTask() {
     window.addEventListener("marrow:focus-add-task", handleFocusAddTask);
     return () => window.removeEventListener("marrow:focus-add-task", handleFocusAddTask);
   }, [expanded]);
+
+  // Listen for keyboard shortcut "M" to open AI dictation
+  useEffect(() => {
+    function handleOpenAiDictate() {
+      setExpanded(false);
+      setAiMode(true);
+    }
+    window.addEventListener("marrow:open-ai-dictate", handleOpenAiDictate);
+    return () => window.removeEventListener("marrow:open-ai-dictate", handleOpenAiDictate);
+  }, []);
 
   const resetForm = (keepProject = false, keepDate = false) => {
     setTitle("");
@@ -150,20 +162,33 @@ export function AddTask() {
 
   return (
     <div className="px-1">
-      {!expanded ? (
+      {aiMode ? (
+        <AiDictate onClose={() => setAiMode(false)} />
+      ) : !expanded ? (
         /* Collapsed state */
-        <button
-          onClick={() => setExpanded(true)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[14px] border border-dashed border-clay-light/60 text-clay hover:border-ember/40 hover:text-ember/60 transition-all duration-200 group cursor-pointer"
-        >
-          <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center transition-transform group-hover:scale-110">
-            <Plus size={14} strokeWidth={2.5} />
-          </div>
-          <span className="text-sm">Add a task&#8230;</span>
-          <kbd className="ml-auto hidden sm:inline text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
-            N
-          </kbd>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setExpanded(true)}
+            className="flex-1 flex items-center gap-3 px-4 py-3.5 rounded-[14px] border border-dashed border-clay-light/60 text-clay hover:border-ember/40 hover:text-ember/60 transition-all duration-200 group cursor-pointer"
+          >
+            <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center transition-transform group-hover:scale-110">
+              <Plus size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-sm">Add a task&#8230;</span>
+            <kbd className="ml-auto hidden sm:inline text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+              N
+            </kbd>
+          </button>
+          <button
+            onClick={() => setAiMode(true)}
+            title="Create tasks with AI"
+            aria-label="Create tasks with AI"
+            className="py-3.5 px-3.5 rounded-[14px] flex items-center gap-1.5 justify-center text-clay bg-surface-raised border border-border-subtle hover:text-ember hover:border-border transition-all duration-200 shrink-0"
+          >
+            <kbd className="hidden sm:inline text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">M</kbd>
+            <Mic size={20} />
+          </button>
+        </div>
       ) : (
         /* Expanded form */
         <div className="rounded-[14px] border border-border bg-surface-raised shadow-md overflow-hidden animate-scale-in">

@@ -4,6 +4,7 @@ interface ShortcutHandlers {
   onToggleSidebar: () => void;
   onQuickFind: () => void;
   onFocusAddTask: () => void;
+  onOpenAiDictate: () => void;
 }
 
 function isTextInput(el: EventTarget | null): boolean {
@@ -18,6 +19,7 @@ export function useKeyboardShortcuts({
   onToggleSidebar,
   onQuickFind,
   onFocusAddTask,
+  onOpenAiDictate,
 }: ShortcutHandlers) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -43,9 +45,16 @@ export function useKeyboardShortcuts({
         onFocusAddTask();
         return;
       }
+
+      // M → open AI dictation (only when not typing in a field)
+      if (e.key === "m" && !mod && !e.altKey && !e.shiftKey && !isTextInput(e.target)) {
+        e.preventDefault();
+        onOpenAiDictate();
+        return;
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onToggleSidebar, onQuickFind, onFocusAddTask]);
+  }, [onToggleSidebar, onQuickFind, onFocusAddTask, onOpenAiDictate]);
 }

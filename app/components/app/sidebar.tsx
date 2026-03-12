@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from "react";
-import { useAppContext } from "@/lib/app-context";
+import { useAppContext, type ViewType } from "@/lib/app-context";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Tooltip,
@@ -162,7 +162,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             active={activeView === item.id}
             collapsed={collapsed}
             onClick={() => {
-              setActiveView(item.id);
+              setActiveView(item.id as ViewType);
               setActiveProject("all");
               navigate({ to: "/app" });
             }}
@@ -468,7 +468,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             active={activeView === item.id}
             collapsed={collapsed}
             onClick={() => {
-              setActiveView(item.id);
+              setActiveView(item.id as ViewType);
               if (item.id === "activity") {
                 navigate({ to: "/app/activity" });
               } else if (item.id === "settings") {
