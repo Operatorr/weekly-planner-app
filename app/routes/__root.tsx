@@ -2,7 +2,6 @@ import { Outlet, createRootRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { ClerkProvider, useAuth } from "@clerk/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useFlags, useLDClient } from "launchdarkly-react-client-sdk";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { OfflineBanner } from "@/components/offline-banner";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ function RootComponent() {
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <QueryClientProvider client={queryClient}>
         <AuthCacheCleaner />
-        <LaunchDarklyTracker />
         <ErrorBoundary>
           <OfflineBanner />
           <Outlet />
@@ -54,27 +52,6 @@ function RootComponent() {
       <Analytics />
     </ClerkProvider>
   );
-}
-
-/** Sends a LaunchDarkly track event and evaluates a flag to confirm SDK connectivity. */
-function LaunchDarklyTracker() {
-  const ldClient = useLDClient();
-  const flags = useFlags();
-
-  useEffect(() => {
-    if (ldClient) {
-      ldClient.track("source", { source: "cursor" });
-    }
-  }, [ldClient]);
-
-  // Log flag evaluation to confirm SDK is connected
-  useEffect(() => {
-    if (flags) {
-      console.log("[LaunchDarkly] Flags loaded:", Object.keys(flags).length);
-    }
-  }, [flags]);
-
-  return null;
 }
 
 /** Clears TanStack Query cache when user signs out. */
