@@ -116,7 +116,7 @@ export function AppHeader() {
               <Search size={14} />
               <span className="text-xs hidden sm:inline">Quick Find</span>
               <kbd className="hidden sm:inline text-[10px] bg-surface-raised border border-border-subtle rounded px-1.5 py-0.5 text-clay font-mono">
-                &#8984;K
+                &#8984; K
               </kbd>
             </button>
           </TooltipTrigger>

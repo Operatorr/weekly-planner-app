@@ -19,6 +19,7 @@ import {
   Trash2,
   Archive,
   Sun,
+  ListChecks,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
@@ -263,7 +264,10 @@ export function TaskItem({
               </Badge>
             )}
             {checklistProgress && (
-              <span className="text-[10px] text-clay">{checklistProgress}</span>
+              <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-clay/10 text-clay">
+                <ListChecks size={10} className="mr-1" />
+                {checklistProgress}
+              </Badge>
             )}
             {showProject && project && (
               <span className="flex items-center gap-1 text-[10px] text-ink-muted">
@@ -275,37 +279,41 @@ export function TaskItem({
               </span>
             )}
             {task.description && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDescExpanded((v) => !v);
-                }}
-                className="flex items-center gap-1 text-[10px] text-clay hover:text-ink-muted transition-colors cursor-pointer"
-              >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  className={cn(
-                    "transition-transform duration-200",
-                    descExpanded && "rotate-90"
-                  )}
+              task.description.length > 40 ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDescExpanded((v) => !v);
+                  }}
+                  className="flex items-center gap-1 text-[10px] text-clay hover:text-ink-muted transition-colors cursor-pointer"
                 >
-                  <path
-                    d="M6 4L10 8L6 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="max-w-[140px] truncate">
-                  {task.description.length > 40
-                    ? task.description.slice(0, 40) + "…"
-                    : task.description}
+                  <span className="max-w-[140px] truncate">
+                    {task.description.slice(0, 40) + "…"}
+                  </span>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    className={cn(
+                      "transition-transform duration-200 flex-shrink-0",
+                      descExpanded && "rotate-180"
+                    )}
+                  >
+                    <path
+                      d="M4 6L8 10L12 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <span className="text-[10px] text-clay max-w-[140px] truncate">
+                  {task.description}
                 </span>
-              </button>
+              )
             )}
           </div>
         )}
