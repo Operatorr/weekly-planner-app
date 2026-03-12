@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDate } from "@/lib/task-context";
+import { useSettings } from "@/lib/settings-context";
 import { cn } from "@/lib/utils";
 import { CalendarDays, X, Archive } from "lucide-react";
 
@@ -21,6 +22,8 @@ export function DatePicker({
   compact,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const { settings } = useSettings();
+  const weekStartsOn = settings.weekStartsOn === "monday" ? 1 : 0;
 
   const selectedDate = value ? new Date(value.split("T")[0] + "T12:00:00") : undefined;
 
@@ -122,6 +125,7 @@ export function DatePicker({
           selected={selectedDate}
           onSelect={handleSelect}
           defaultMonth={selectedDate || new Date()}
+          weekStartsOn={weekStartsOn}
         />
         <div className="px-3 pb-3 space-y-1">
           {/* Quick date options */}

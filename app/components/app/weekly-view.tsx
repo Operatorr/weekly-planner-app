@@ -54,12 +54,12 @@ function DraggableWeekTask({
         isDragging && "bg-surface-raised"
       )}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-center sm:justify-start gap-1.5">
         <div className={cn(
           "w-3 h-3 rounded-full border-[1.5px] flex-shrink-0",
           isOverdue ? "border-ember" : "border-clay-light"
         )} />
-        <span className="truncate">{task.title}</span>
+        <span className="truncate hidden sm:inline">{task.title}</span>
       </div>
     </button>
   );
@@ -120,13 +120,6 @@ function DayColumn({
               onClick={onTaskClick}
             />
           ))}
-          {tasks.length === 0 && (
-            <div className="h-full flex items-center justify-center py-4">
-              <span className="text-[10px] text-clay/40">
-                &mdash;
-              </span>
-            </div>
-          )}
         </div>
       </SortableContext>
     </div>
