@@ -48,6 +48,7 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   badge?: number;
+  description?: string;
 }
 
 const bottomNavItems: NavItem[] = [
@@ -132,10 +133,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   const topNavItems: NavItem[] = useMemo(
     () => [
-      { id: "inbox", label: "Inbox", icon: <Inbox size={18} /> },
-      { id: "today", label: "Today", icon: <Sun size={18} />, badge: settings.showTaskCountBadges ? (todayTaskCount || undefined) : undefined },
-      { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} /> },
-      { id: "someday", label: "Someday", icon: <Archive size={18} /> },
+      { id: "inbox", label: "Inbox", icon: <Inbox size={18} />, description: "Every task, all at once — your complete backlog with no date filters applied." },
+      { id: "today", label: "Today", icon: <Sun size={18} />, badge: settings.showTaskCountBadges ? (todayTaskCount || undefined) : undefined, description: "Tasks due today, overdue items, and undated tasks. Someday tasks are excluded." },
+      { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} />, description: "Tasks with a future due date. Plan and prepare for what's ahead." },
+      { id: "someday", label: "Someday", icon: <Archive size={18} />, description: "Tasks you've intentionally deferred — no deadline, no pressure, just ideas for later." },
     ],
     [todayTaskCount, settings.showTaskCountBadges]
   );
@@ -566,6 +567,21 @@ function SidebarItem({
       )}
     </button>
   );
+
+  if (item.description) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="max-w-[200px] px-3 py-2.5">
+          <p className="font-semibold text-chalk text-xs leading-tight">
+            {item.label}
+            {item.badge ? ` (${item.badge})` : ""}
+          </p>
+          <p className="text-chalk/70 text-xs leading-snug mt-1">{item.description}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   if (collapsed) {
     return (

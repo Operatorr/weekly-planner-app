@@ -136,7 +136,8 @@ export function useFutureTasks(projectId?: string) {
       for (const t of tasks) {
         if (!t.due_date) continue;
         // Group by ISO week start (Monday)
-        const d = new Date(t.due_date + "T12:00:00");
+        const d = new Date(t.due_date.split("T")[0] + "T12:00:00");
+        if (isNaN(d.getTime())) continue;
         const day = d.getDay();
         const diff = day === 0 ? -6 : 1 - day;
         const mon = new Date(d);

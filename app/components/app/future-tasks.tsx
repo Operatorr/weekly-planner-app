@@ -20,7 +20,8 @@ export function FutureTasks({ tasks }: FutureTasksProps) {
   // Group by week
   const grouped = activeTasks.reduce<Record<string, Task[]>>((acc, task) => {
     if (!task.due_date) return acc;
-    const d = new Date(task.due_date + "T12:00:00");
+    const d = new Date(task.due_date.split("T")[0] + "T12:00:00");
+    if (isNaN(d.getTime())) return acc;
     const weekStart = new Date(d);
     const day = weekStart.getDay();
     const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
