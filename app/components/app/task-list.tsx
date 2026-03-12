@@ -21,6 +21,7 @@ interface TaskListProps {
   insertionInfo?: { overId: string; position: "before" | "after" } | null;
   projects?: Project[];
   showProject?: boolean;
+  alwaysShowCompleted?: boolean;
 }
 
 export function TaskList({
@@ -31,6 +32,7 @@ export function TaskList({
   insertionInfo,
   projects = [],
   showProject = false,
+  alwaysShowCompleted = false,
 }: TaskListProps) {
   const { completeTask, uncompleteTask, deleteTask, updateTask } = useTaskContext();
   const { settings } = useSettings();
@@ -181,7 +183,7 @@ export function TaskList({
       </SortableContext>
 
       {/* Completed tasks toggle */}
-      {settings.showCompletedTasks && completedTasks.length > 0 && (
+      {(settings.showCompletedTasks || alwaysShowCompleted) && completedTasks.length > 0 && (
         <div className="mt-3 px-5">
           <button
             onClick={() => setShowCompleted(!showCompleted)}

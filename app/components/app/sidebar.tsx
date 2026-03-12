@@ -30,7 +30,6 @@ import type { Project } from "@/lib/types";
 import {
   Sun,
   Calendar,
-  Archive,
   Inbox,
   Clock,
   Settings,
@@ -41,6 +40,7 @@ import {
   Pencil,
   Trash2,
   MoreHorizontal,
+  Archive,
 } from "lucide-react";
 
 interface NavItem {

@@ -8,7 +8,7 @@ import { useAppContext } from "@/lib/app-context";
 import { useSettings } from "@/lib/settings-context";
 import { useProjects } from "@/hooks/use-projects";
 import { useUserTier } from "@/hooks/use-user-tier";
-import { Plus } from "lucide-react";
+import { Plus, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 export function AddTask() {
@@ -23,6 +23,7 @@ export function AddTask() {
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [reminder, setReminder] = useState<ReminderValue>({ type: "none" });
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [isSomeday, setIsSomeday] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get the default project for the current context (null when viewing "all")
@@ -58,6 +59,7 @@ export function AddTask() {
       if (dueDate === null) {
         setDueDate(getDefaultDueDate());
       }
+      setIsSomeday(activeView === "someday");
     }
   }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,6 +81,7 @@ export function AddTask() {
     setDescription("");
     if (!keepDate) setDueDate(getDefaultDueDate());
     setReminder({ type: "none" });
+    setIsSomeday(activeView === "someday");
     if (!keepProject) {
       const contextProject = getDefaultProject();
       setProjectId(contextProject || (settings.defaultProject !== "none" ? settings.defaultProject : null));
@@ -88,8 +91,6 @@ export function AddTask() {
   const handleSubmit = () => {
     if (!title.trim()) return;
 
-    // Determine is_someday based on current view
-    const isSomeday = activeView === "someday";
     const taskTitle = title.trim();
 
     // Fire and forget - optimistic update handles UI immediately
@@ -117,6 +118,10 @@ export function AddTask() {
       toast("Task added", {
         description: `"${taskTitle}" was saved to ${location}`,
       });
+    }
+
+    if (isSomeday && activeView !== "someday") {
+      toast("Task added", { description: `"${taskTitle}" was saved to Someday` });
     }
 
     if (settings.autoCloseFormAfterAdd) {
@@ -194,7 +199,14 @@ export function AddTask() {
 
             {/* Option buttons */}
             <div className="flex items-center gap-1.5">
-              <DatePicker value={dueDate} onChange={setDueDate} compact />
+              <DatePicker
+                value={dueDate}
+                onChange={(date) => {
+                  setDueDate(date);
+                  if (date) setIsSomeday(false);
+                }}
+                compact
+              />
               <ReminderSelector value={reminder} onChange={setReminder} compact userTier={userTier} />
               <ProjectSelector
                 value={projectId || ""}
@@ -202,6 +214,23 @@ export function AddTask() {
                 projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color }))}
                 compact
               />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSomeday((v) => {
+                    if (!v) setDueDate(null);
+                    return !v;
+                  });
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-[8px] text-xs transition-colors ${
+                  isSomeday
+                    ? "bg-ember/10 text-ember border border-ember/30"
+                    : "text-clay hover:text-ink border border-transparent hover:border-border"
+                }`}
+              >
+                <Archive size={13} />
+                Someday
+              </button>
             </div>
           </div>
 

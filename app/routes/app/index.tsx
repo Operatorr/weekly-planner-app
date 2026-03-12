@@ -328,8 +328,8 @@ function TaskManagement() {
   }, [tasks, activeProject]);
 
   // Determine which sections to show based on view (hide when filter active)
-  const showWeeklyView = !isFilterActive && (activeView === "today" || activeView === "inbox");
-  const showFutureTasks = !isFilterActive && (activeView === "today" || activeView === "inbox");
+  const showWeeklyView = !isFilterActive && activeView === "today";
+  const showFutureTasks = !isFilterActive && activeView === "today";
 
   // Section 2: Tasks to show in the main task list
   // For upcoming/someday: show all filtered tasks (already filtered by view)
@@ -351,13 +351,16 @@ function TaskManagement() {
     } else if (activeView === "someday") {
       // Someday: show all filtered tasks (already filtered to is_someday)
       result = filteredTasks;
+    } else if (activeView === "inbox") {
+      // Inbox: the complete backlog — all tasks, no date filtering
+      result = filteredTasks;
     } else {
-      // Today/Inbox: show undated + overdue + today
+      // Today: undated + overdue + today only
       result = filteredTasks.filter(
         (t) =>
           !t.due_date ||
-          (t.due_date && isToday(t.due_date)) ||
-          (t.due_date && isPast(t.due_date) && !isToday(t.due_date))
+          isToday(t.due_date) ||
+          (isPast(t.due_date) && !isToday(t.due_date))
       );
     }
 
@@ -559,6 +562,7 @@ function TaskManagement() {
               insertionInfo={insertionInfo}
               projects={projects}
               showProject={activeView === "inbox" || activeView === "today"}
+              alwaysShowCompleted={activeView === "inbox"}
             />
 
             {showWeeklyView && (
