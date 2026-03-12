@@ -14,7 +14,8 @@ import { useSettings } from "@/lib/settings-context";
 // ── Helpers ──────────────────────────────────────────────────────
 
 export function todayStr(): string {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Normalize date string to YYYY-MM-DD format (handles both "2026-02-25" and "2026-02-25T00:00:00.000Z")
@@ -22,12 +23,16 @@ export function normalizeDate(dateStr: string): string {
   return dateStr.split("T")[0];
 }
 
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function startOfWeekStr(): string {
   const d = new Date();
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 export function endOfWeekStr(): string {
@@ -35,13 +40,13 @@ export function endOfWeekStr(): string {
   const day = d.getDay();
   const diff = day === 0 ? 0 : 7 - day;
   d.setDate(d.getDate() + diff);
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 function dateOffset(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 // ── Date utilities (exported for components) ─────────────────────
@@ -78,7 +83,7 @@ export function getWeekDays(weekOffset = 0): { label: string; date: string; isTo
   return days.map((label, i) => {
     const dd = new Date(mon);
     dd.setDate(dd.getDate() + i);
-    const dateStr = dd.toISOString().split("T")[0];
+    const dateStr = localDateStr(dd);
     return { label: `${label} ${dd.getDate()}`, date: dateStr, isToday: dateStr === today };
   });
 }

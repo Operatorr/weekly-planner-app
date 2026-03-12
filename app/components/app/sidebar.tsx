@@ -131,14 +131,24 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     ).length;
   }, [tasks, todayStr]);
 
+  const upcomingTaskCount = useMemo(() => {
+    return tasks.filter(
+      (task) => task.due_date && normalizeDate(task.due_date) > todayStr && task.status !== "completed" && !task.is_someday
+    ).length;
+  }, [tasks, todayStr]);
+
+  const somedayTaskCount = useMemo(() => {
+    return tasks.filter((task) => task.is_someday && task.status !== "completed").length;
+  }, [tasks]);
+
   const topNavItems: NavItem[] = useMemo(
     () => [
       { id: "inbox", label: "Inbox", icon: <Inbox size={18} />, description: "Every task, all at once — your complete backlog with no date filters applied." },
       { id: "today", label: "Today", icon: <Sun size={18} />, badge: settings.showTaskCountBadges ? (todayTaskCount || undefined) : undefined, description: "Tasks due today, overdue items, and undated tasks. Someday tasks are excluded." },
-      { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} />, description: "Tasks with a future due date. Plan and prepare for what's ahead." },
-      { id: "someday", label: "Someday", icon: <Archive size={18} />, description: "Tasks you've intentionally deferred — no deadline, no pressure, just ideas for later." },
+      { id: "upcoming", label: "Upcoming", icon: <Calendar size={18} />, badge: settings.showTaskCountBadges ? (upcomingTaskCount || undefined) : undefined, description: "Tasks with a future due date. Plan and prepare for what's ahead." },
+      { id: "someday", label: "Someday", icon: <Archive size={18} />, badge: settings.showTaskCountBadges ? (somedayTaskCount || undefined) : undefined, description: "Tasks you've intentionally deferred — no deadline, no pressure, just ideas for later." },
     ],
-    [todayTaskCount, settings.showTaskCountBadges]
+    [todayTaskCount, upcomingTaskCount, somedayTaskCount, settings.showTaskCountBadges]
   );
 
   return (

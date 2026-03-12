@@ -25,13 +25,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           UPDATE tasks
           SET status = 'completed', completed_at = NOW(), updated_at = NOW()
           WHERE id = ${id} AND user_id = ${userId}
-          RETURNING *
+          RETURNING *, due_date::text AS due_date
         `
       : await sql`
           UPDATE tasks
           SET status = 'active', completed_at = NULL, updated_at = NOW()
           WHERE id = ${id} AND user_id = ${userId}
-          RETURNING *
+          RETURNING *, due_date::text AS due_date
         `;
 
     if (rows.length === 0) {

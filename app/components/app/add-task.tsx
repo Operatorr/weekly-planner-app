@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/app/date-picker";
 import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
 import { ProjectSelector } from "@/components/app/project-selector";
-import { useTaskContext, isBeyondThisWeek } from "@/lib/task-context";
+import { useTaskContext, isBeyondThisWeek, todayStr } from "@/lib/task-context";
 import { useAppContext } from "@/lib/app-context";
 import { useSettings } from "@/lib/settings-context";
 import { useProjects } from "@/hooks/use-projects";
@@ -32,12 +32,13 @@ export function AddTask() {
   // Compute the default due date from settings
   const getDefaultDueDate = (): string | null => {
     if (settings.defaultDueDate === "today") {
-      return new Date().toISOString().split("T")[0];
+      return todayStr();
     }
     if (settings.defaultDueDate === "tomorrow") {
       const d = new Date();
       d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
     return null;
   };
@@ -107,7 +108,7 @@ export function AddTask() {
     // Show confirmation toast when the task won't appear in the current main task list.
     // In today/inbox views the main list only shows today, overdue, and undated tasks —
     // anything with a future due date lands in the Weekly or Later sections instead.
-    const today = new Date().toISOString().split("T")[0];
+    const today = todayStr();
     const hiddenFromMainList =
       (activeView === "today" || activeView === "inbox") &&
       dueDate != null &&

@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await cleanupOldActivity(userId);
 
       const rows = await sql`
-        SELECT * FROM tasks
+        SELECT *, due_date::text AS due_date FROM tasks
         WHERE user_id = ${userId}
         ORDER BY sort_order ASC, created_at DESC
       `;
@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rows = await sql`
       INSERT INTO tasks (user_id, project_id, title, description, due_date, is_someday, sort_order, status)
       VALUES (${userId}, ${data.project_id ?? null}, ${data.title}, ${data.description ?? ''}, ${data.due_date ?? null}, ${data.is_someday ?? false}, ${sortOrder}, 'active')
-      RETURNING *
+      RETURNING *, due_date::text AS due_date
     `;
 
     const task = rows[0];

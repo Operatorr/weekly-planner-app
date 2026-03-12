@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sort_order = COALESCE(${data.sort_order ?? null}, sort_order),
           updated_at = NOW()
         WHERE id = ${id} AND user_id = ${userId}
-        RETURNING *
+        RETURNING *, due_date::text AS due_date
       `;
 
       if (rows.length === 0) {
