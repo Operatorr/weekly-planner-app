@@ -153,7 +153,7 @@ interface TaskContextValue {
   uncompleteTask: (id: string) => void;
   deleteTask: (id: string) => void;
   reorderTasks: (taskIds: string[], newOrders: number[]) => void;
-  addChecklistItem: (taskId: string, title: string) => void;
+  addChecklistItem: (taskId: string, title: string) => Promise<ChecklistItem | void>;
   toggleChecklistItem: (taskId: string, itemId: string) => void;
   deleteChecklistItem: (taskId: string, itemId: string) => void;
 }
@@ -278,15 +278,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       is_someday?: boolean;
     }): Promise<Task> => {
       const optimisticId = `optimistic-${crypto.randomUUID()}`;
-      return new Promise((resolve, reject) => {
-        createMutation.mutate(
-          { ...input, optimisticId },
-          {
-            onSuccess: (data) => resolve(data),
-            onError: (error) => reject(error),
-          }
-        );
-      });
+      return createMutation.mutateAsync({ ...input, optimisticId });
     },
     [createMutation]
   );
@@ -540,10 +532,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   });
 
   const addChecklistItem = useCallback(
-    (taskId: string, title: string) => {
-      if (taskId.startsWith("optimistic-")) return;
+    (taskId: string, title: string): Promise<ChecklistItem | void> => {
+      if (taskId.startsWith("optimistic-")) return Promise.resolve();
       const optimisticId = `optimistic-${crypto.randomUUID()}`;
-      addChecklistMutation.mutate({ taskId, title, optimisticId });
+      return addChecklistMutation.mutateAsync({ taskId, title, optimisticId });
     },
     [addChecklistMutation]
   );

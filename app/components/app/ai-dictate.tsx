@@ -263,7 +263,7 @@ function ResultsState({
         });
         if (task.checklist?.length && created?.id) {
           for (const item of task.checklist) {
-            addChecklistItem(created.id, item);
+            await addChecklistItem(created.id, item);
           }
         }
       } catch {
