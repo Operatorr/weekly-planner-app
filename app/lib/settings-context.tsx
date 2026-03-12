@@ -51,11 +51,18 @@ export const defaultSettings: AppSettings = {
   soundOnComplete: true,
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function loadSettings(): AppSettings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
-      return { ...defaultSettings, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      // Sanitize defaultProject: must be "none" or a valid UUID
+      if (parsed.defaultProject && parsed.defaultProject !== "none" && !UUID_RE.test(parsed.defaultProject)) {
+        parsed.defaultProject = "none";
+      }
+      return { ...defaultSettings, ...parsed };
     }
   } catch {
     // ignore

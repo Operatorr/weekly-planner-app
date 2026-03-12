@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Task } from "@/lib/types";
 import { getWeekDays, getWeekRange, normalizeDate, isPast, isToday } from "@/lib/task-context";
 import { useTaskContext } from "@/lib/task-context";
@@ -134,14 +134,38 @@ function DayColumn({
 
 export function WeeklyView({ tasks }: WeeklyViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
   const { tasks: allTasks } = useTaskContext();
-  const weekDays = getWeekDays();
-  const weekRange = getWeekRange();
+  const weekDays = getWeekDays(weekOffset);
+  const weekRange = getWeekRange(weekOffset);
 
   // Sync selectedTask with latest data
   const currentSelectedTask = selectedTask
     ? allTasks.find((t) => t.id === selectedTask.id) || null
     : null;
+
+  // Keyboard shortcuts for week navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (
+        document.activeElement instanceof HTMLInputElement ||
+        document.activeElement instanceof HTMLTextAreaElement
+      ) return;
+      if (e.key === "ArrowLeft") setWeekOffset((w) => w - 1);
+      if (e.key === "ArrowRight") setWeekOffset((w) => w + 1);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const weekLabel =
+    weekOffset === 0
+      ? "This Week"
+      : weekOffset === -1
+      ? "Last Week"
+      : weekOffset === 1
+      ? "Next Week"
+      : weekRange;
 
   return (
     <section>
@@ -149,19 +173,31 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
       <div className="flex items-center justify-between px-5 mb-4">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold tracking-wider uppercase text-clay">
-            This Week
+            {weekLabel}
           </h2>
-          <span className="text-xs text-clay">{weekRange}</span>
+          {weekOffset !== 0 && (
+            <span className="text-xs text-clay">{weekRange}</span>
+          )}
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="text-[10px] px-1.5 py-0.5 rounded-[5px] bg-bone text-ink-muted hover:bg-bone/80 transition-colors"
+            >
+              Today
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button
             aria-label="Previous week"
+            onClick={() => setWeekOffset((w) => w - 1)}
             className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
           >
             <ChevronLeft size={14} />
           </button>
           <button
             aria-label="Next week"
+            onClick={() => setWeekOffset((w) => w + 1)}
             className="w-6 h-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink-muted hover:bg-bone transition-colors"
           >
             <ChevronRight size={14} />
@@ -174,7 +210,11 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
         <div className="grid grid-cols-7 gap-1.5 min-h-[200px]">
           {weekDays.map((day) => {
             const dayTasks = tasks.filter(
-              (t) => t.due_date && normalizeDate(t.due_date) === day.date && t.status !== "completed"
+              (t) =>
+                t.due_date &&
+                normalizeDate(t.due_date) === day.date &&
+                t.status !== "completed" &&
+                !(weekOffset === 0 && isToday(t.due_date))
             );
 
             return (

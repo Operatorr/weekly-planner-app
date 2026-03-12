@@ -6,7 +6,6 @@ import {
   useTaskContext,
   isToday,
   isPast,
-  isThisWeek,
   isBeyondThisWeek,
   normalizeDate,
   todayStr,
@@ -325,14 +324,7 @@ function TaskManagement() {
       result = result.filter((t) => t.project_id === activeProject);
     }
 
-    // Filter for this week's tasks (not today, includes overdue from this week)
-    return result.filter(
-      (t) =>
-        t.due_date &&
-        isThisWeek(t.due_date) &&
-        !isToday(t.due_date) &&
-        t.status !== "completed"
-    );
+    return result.filter((t) => t.due_date && t.status !== "completed");
   }, [tasks, activeProject]);
 
   // Determine which sections to show based on view (hide when filter active)
@@ -379,10 +371,20 @@ function TaskManagement() {
     });
   }, [filteredTasks, activeView, isFilterActive]);
 
-  // Section 4: beyond this week
-  const section4Tasks = filteredTasks.filter(
-    (t) => t.due_date && isBeyondThisWeek(t.due_date)
-  );
+  // Section 4: beyond this week (project-filtered only, bypasses view filter like weeklyViewTasks)
+  const section4Tasks = useMemo(() => {
+    let result = tasks;
+
+    if (activeProject !== "all") {
+      result = result.filter((t) => t.project_id === activeProject);
+    }
+
+    if (isFilterActive) return [];
+
+    return result.filter(
+      (t) => t.due_date && isBeyondThisWeek(t.due_date) && t.status !== "completed"
+    );
+  }, [tasks, activeProject, isFilterActive]);
 
   const activeSection2Count = section2Tasks.filter((t) => t.status !== "completed").length;
 

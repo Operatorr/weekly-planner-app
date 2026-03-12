@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/app/date-picker";
 import { ReminderSelector, type ReminderValue } from "@/components/app/reminder-selector";
 import { ProjectSelector } from "@/components/app/project-selector";
-import { useTaskContext } from "@/lib/task-context";
+import { useTaskContext, isBeyondThisWeek } from "@/lib/task-context";
 import { useAppContext } from "@/lib/app-context";
 import { useSettings } from "@/lib/settings-context";
 import { useProjects } from "@/hooks/use-projects";
 import { useUserTier } from "@/hooks/use-user-tier";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 export function AddTask() {
   const { createTask } = useTaskContext();
@@ -89,10 +90,11 @@ export function AddTask() {
 
     // Determine is_someday based on current view
     const isSomeday = activeView === "someday";
+    const taskTitle = title.trim();
 
     // Fire and forget - optimistic update handles UI immediately
     createTask({
-      title: title.trim(),
+      title: taskTitle,
       description: description.trim() || undefined,
       due_date: dueDate,
       project_id: projectId || null,
@@ -100,6 +102,22 @@ export function AddTask() {
       reminder_type: reminder.type !== "none" ? reminder.type : undefined,
       reminder_time: reminder.time,
     });
+
+    // Show confirmation toast when the task won't appear in the current main task list.
+    // In today/inbox views the main list only shows today, overdue, and undated tasks —
+    // anything with a future due date lands in the Weekly or Later sections instead.
+    const today = new Date().toISOString().split("T")[0];
+    const hiddenFromMainList =
+      (activeView === "today" || activeView === "inbox") &&
+      dueDate != null &&
+      dueDate > today;
+
+    if (hiddenFromMainList) {
+      const location = isBeyondThisWeek(dueDate!) ? "Later" : "This Week";
+      toast("Task added", {
+        description: `"${taskTitle}" was saved to ${location}`,
+      });
+    }
 
     if (settings.autoCloseFormAfterAdd) {
       // Close form and reset fully

@@ -10,6 +10,9 @@ import { useSettings } from "@/lib/settings-context";
 import { playTaskCompleteSound } from "@/lib/sounds";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
+import * as api from "@/lib/api";
 import {
   X,
   Trash2,
@@ -27,7 +30,6 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const {
     updateTask,
     deleteTask,
-    getChecklist,
     addChecklistItem,
     toggleChecklistItem,
     deleteChecklistItem,
@@ -35,6 +37,16 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const { data: projects = [] } = useProjects();
   const { data: userTier = "free" } = useUserTier();
   const { settings } = useSettings();
+  const { getToken } = useAuth();
+
+  const { data: checklist = [] } = useQuery({
+    queryKey: ["checklist", task.id],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      return api.fetchChecklist(token, task.id);
+    },
+  });
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -49,7 +61,6 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checklistInputRef = useRef<HTMLInputElement>(null);
 
-  const checklist = getChecklist(task.id);
   const completedCount = checklist.filter((c) => c.is_completed).length;
 
   // Auto-save with debounce (500ms)

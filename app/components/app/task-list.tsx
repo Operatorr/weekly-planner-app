@@ -32,7 +32,7 @@ export function TaskList({
   projects = [],
   showProject = false,
 }: TaskListProps) {
-  const { completeTask, uncompleteTask, deleteTask, updateTask, getChecklist } = useTaskContext();
+  const { completeTask, uncompleteTask, deleteTask, updateTask } = useTaskContext();
   const { settings } = useSettings();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -84,12 +84,6 @@ export function TaskList({
     } else {
       completeTask(id);
     }
-  };
-
-  const getChecklistCount = (taskId: string) => {
-    const items = getChecklist(taskId);
-    if (items.length === 0) return undefined;
-    return { done: items.filter((c) => c.is_completed).length, total: items.length };
   };
 
   // Sync selectedTask with latest data
@@ -159,7 +153,6 @@ export function TaskList({
                     onClick={setSelectedTask}
                     onDelete={deleteTask}
                     onUpdate={updateTask}
-                    checklistCount={getChecklistCount(task.id)}
                     sortable
                     insertPosition={insertPosition}
                     showProject={showProject}

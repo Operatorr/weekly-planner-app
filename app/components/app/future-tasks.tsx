@@ -11,7 +11,7 @@ interface FutureTasksProps {
 }
 
 export function FutureTasks({ tasks }: FutureTasksProps) {
-  const { completeTask, uncompleteTask, deleteTask, getChecklist, tasks: allTasks } = useTaskContext();
+  const { completeTask, uncompleteTask, deleteTask, tasks: allTasks } = useTaskContext();
   const [expanded, setExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -41,12 +41,6 @@ export function FutureTasks({ tasks }: FutureTasksProps) {
     } else {
       completeTask(id);
     }
-  };
-
-  const getChecklistCount = (taskId: string) => {
-    const items = getChecklist(taskId);
-    if (items.length === 0) return undefined;
-    return { done: items.filter((c) => c.is_completed).length, total: items.length };
   };
 
   // Sync selectedTask with latest data
@@ -105,7 +99,6 @@ export function FutureTasks({ tasks }: FutureTasksProps) {
                       onToggle={handleToggle}
                       onClick={setSelectedTask}
                       onDelete={deleteTask}
-                      checklistCount={getChecklistCount(task.id)}
                     />
                   ))}
                 </div>

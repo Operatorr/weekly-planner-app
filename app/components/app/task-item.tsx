@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import type { Task, Project } from "@/lib/types";
 import { formatDate, isToday, isPast } from "@/lib/task-context";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
+import * as api from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -39,7 +42,6 @@ interface TaskItemProps {
   showProject?: boolean;
   project?: Project;
   compact?: boolean;
-  checklistCount?: { done: number; total: number };
   sortable?: boolean;
   insertPosition?: "before" | "after" | null;
 }
@@ -53,11 +55,26 @@ export function TaskItem({
   showProject,
   project,
   compact,
-  checklistCount,
   sortable = false,
   insertPosition,
 }: TaskItemProps) {
   const { settings } = useSettings();
+  const { getToken } = useAuth();
+
+  const { data: checklistItems = [] } = useQuery({
+    queryKey: ["checklist", task.id],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      return api.fetchChecklist(token, task.id);
+    },
+    staleTime: 2 * 60 * 1000, // 2 min — avoid refetching on every render
+  });
+
+  const checklistCount =
+    checklistItems.length > 0
+      ? { done: checklistItems.filter((c) => c.is_completed).length, total: checklistItems.length }
+      : undefined;
   const [completing, setCompleting] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);

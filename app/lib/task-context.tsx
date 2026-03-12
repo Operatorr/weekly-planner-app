@@ -1,7 +1,6 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   type ReactNode,
 } from "react";
@@ -68,11 +67,11 @@ export function isBeyondThisWeek(dateStr: string): boolean {
   return normalizeDate(dateStr) > endOfWeekStr();
 }
 
-export function getWeekDays(): { label: string; date: string; isToday: boolean }[] {
+export function getWeekDays(weekOffset = 0): { label: string; date: string; isToday: boolean }[] {
   const today = todayStr();
   const d = new Date();
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
+  const diff = (day === 0 ? -6 : 1 - day) + weekOffset * 7;
   const mon = new Date(d);
   mon.setDate(mon.getDate() + diff);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -84,10 +83,10 @@ export function getWeekDays(): { label: string; date: string; isToday: boolean }
   });
 }
 
-export function getWeekRange(): string {
+export function getWeekRange(weekOffset = 0): string {
   const d = new Date();
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
+  const diff = (day === 0 ? -6 : 1 - day) + weekOffset * 7;
   const mon = new Date(d);
   mon.setDate(mon.getDate() + diff);
   const sun = new Date(mon);
@@ -157,8 +156,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { settings } = useSettings();
 
-  // Local checklist cache (fetched on demand per task)
-  const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>({});
 
   // Fetch tasks
   const {
@@ -478,8 +475,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   // ── Checklist Operations ────────────────────────────────────────
 
   const getChecklist = useCallback(
-    (taskId: string): ChecklistItem[] => checklists[taskId] || [],
-    [checklists]
+    (taskId: string): ChecklistItem[] =>
+      queryClient.getQueryData<ChecklistItem[]>(["checklist", taskId]) || [],
+    [queryClient]
   );
 
   const addChecklistMutation = useMutation({
@@ -489,7 +487,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return api.addChecklistItem(token, { task_id: taskId, title });
     },
     onMutate: async ({ taskId, title, optimisticId }) => {
-      const previous = checklists[taskId] || [];
+      await queryClient.cancelQueries({ queryKey: ["checklist", taskId] });
+      const previous = queryClient.getQueryData<ChecklistItem[]>(["checklist", taskId]) || [];
       const optimisticItem: ChecklistItem = {
         id: optimisticId,
         task_id: taskId,
@@ -498,30 +497,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         sort_order: previous.length,
         created_at: new Date().toISOString(),
       };
-      setChecklists((prev) => ({
-        ...prev,
-        [taskId]: [...(prev[taskId] || []), optimisticItem],
-      }));
+      queryClient.setQueryData<ChecklistItem[]>(["checklist", taskId], [...previous, optimisticItem]);
       return { taskId, previous, optimisticId };
     },
     onSuccess: (newItem, _vars, context) => {
       // Replace optimistic item with real item from server
       if (context?.taskId && context?.optimisticId) {
-        setChecklists((prev) => ({
-          ...prev,
-          [context.taskId]: (prev[context.taskId] || []).map((item) =>
-            item.id === context.optimisticId ? newItem : item
-          ),
-        }));
+        queryClient.setQueryData<ChecklistItem[]>(["checklist", context.taskId], (old = []) =>
+          old.map((item) => (item.id === context.optimisticId ? newItem : item))
+        );
       }
     },
     onError: (error: Error, _vars, context) => {
       // Rollback to previous state
       if (context?.taskId) {
-        setChecklists((prev) => ({
-          ...prev,
-          [context.taskId]: context.previous || [],
-        }));
+        queryClient.setQueryData(["checklist", context.taskId], context.previous || []);
       }
       toast.error("Failed to add checklist item", { description: error.message });
     },
@@ -551,21 +541,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return api.updateChecklistItem(token, itemId, { is_completed });
     },
     onMutate: async ({ taskId, itemId, is_completed }) => {
-      const previous = checklists[taskId];
-      setChecklists((prev) => ({
-        ...prev,
-        [taskId]: (prev[taskId] || []).map((item) =>
-          item.id === itemId ? { ...item, is_completed } : item
-        ),
-      }));
+      await queryClient.cancelQueries({ queryKey: ["checklist", taskId] });
+      const previous = queryClient.getQueryData<ChecklistItem[]>(["checklist", taskId]);
+      queryClient.setQueryData<ChecklistItem[]>(["checklist", taskId], (old = []) =>
+        old.map((item) => (item.id === itemId ? { ...item, is_completed } : item))
+      );
       return { taskId, previous };
     },
     onError: (error: Error, _vars, context) => {
       if (context?.previous && context?.taskId) {
-        setChecklists((prev) => ({
-          ...prev,
-          [context.taskId]: context.previous,
-        }));
+        queryClient.setQueryData(["checklist", context.taskId], context.previous);
       }
       toast.error("Failed to update checklist item", { description: error.message });
     },
@@ -573,7 +558,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const toggleChecklistItem = useCallback(
     (taskId: string, itemId: string) => {
-      const item = checklists[taskId]?.find((i) => i.id === itemId);
+      const items = queryClient.getQueryData<ChecklistItem[]>(["checklist", taskId]) || [];
+      const item = items.find((i) => i.id === itemId);
       if (item) {
         updateChecklistMutation.mutate({
           taskId,
@@ -582,7 +568,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [updateChecklistMutation, checklists]
+    [updateChecklistMutation, queryClient]
   );
 
   const deleteChecklistMutation = useMutation({
@@ -593,19 +579,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return { taskId, itemId };
     },
     onMutate: async ({ taskId, itemId }) => {
-      const previous = checklists[taskId];
-      setChecklists((prev) => ({
-        ...prev,
-        [taskId]: (prev[taskId] || []).filter((item) => item.id !== itemId),
-      }));
+      await queryClient.cancelQueries({ queryKey: ["checklist", taskId] });
+      const previous = queryClient.getQueryData<ChecklistItem[]>(["checklist", taskId]);
+      queryClient.setQueryData<ChecklistItem[]>(["checklist", taskId], (old = []) =>
+        old.filter((item) => item.id !== itemId)
+      );
       return { taskId, previous };
     },
     onError: (error: Error, _vars, context) => {
       if (context?.previous && context?.taskId) {
-        setChecklists((prev) => ({
-          ...prev,
-          [context.taskId]: context.previous,
-        }));
+        queryClient.setQueryData(["checklist", context.taskId], context.previous);
       }
       toast.error("Failed to delete checklist item", { description: error.message });
     },
