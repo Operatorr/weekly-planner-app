@@ -89,6 +89,15 @@ export interface ActivityEntry {
   created_at: string;
 }
 
+// ── AI Dictation ────────────────────────────────────────────────
+
+export interface DictatedTask {
+  title: string;
+  description: string;
+  checklist?: string[];
+  due_date?: string | null;
+}
+
 // ── Input types (for create / update mutations) ──────────────────
 
 export interface CreateTaskInput {

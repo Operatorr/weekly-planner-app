@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/use-projects";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTaskContext, normalizeDate } from "@/lib/task-context";
+import { useTaskContextSafe, normalizeDate } from "@/lib/task-context";
 import { useSettings } from "@/lib/settings-context";
 import { useDroppable } from "@dnd-kit/core";
 import { ColorPicker } from "@/components/app/color-picker";
@@ -62,7 +62,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const createProject = useCreateProject();
   const { mutate: updateProject } = useUpdateProject();
   const { mutate: deleteProject } = useDeleteProject();
-  const { tasks } = useTaskContext();
+  const taskCtx = useTaskContextSafe();
+  const tasks = taskCtx?.tasks ?? [];
   const { settings } = useSettings();
   const navigate = useNavigate();
 

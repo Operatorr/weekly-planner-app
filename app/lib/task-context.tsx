@@ -166,6 +166,11 @@ export function useTaskContext() {
   return ctx;
 }
 
+/** Safe version that returns null when outside TaskProvider (e.g. during HMR) */
+export function useTaskContextSafe() {
+  return useContext(TaskContext);
+}
+
 // ── Provider ────────────────────────────────────────────────────
 
 export function TaskProvider({ children }: { children: ReactNode }) {

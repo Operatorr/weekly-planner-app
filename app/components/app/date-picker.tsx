@@ -94,16 +94,25 @@ export function DatePicker({
             </>
           )}
           {(value || isSomeday) && (
-            <button
+            <span
+              role="button"
+              tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
                 handleClear();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleClear();
+                }
               }}
               className="ml-auto w-4 h-4 rounded-full flex items-center justify-center text-clay hover:text-ink hover:bg-bone-dark transition-colors"
               aria-label="Clear date"
             >
               <X size={10} />
-            </button>
+            </span>
           )}
         </button>
       </PopoverTrigger>

@@ -3,7 +3,7 @@
  * Centralized fetch wrapper with Clerk authentication
  */
 
-import type { Task, Project, ChecklistItem } from "./types";
+import type { Task, Project, ChecklistItem, DictatedTask } from "./types";
 
 // In development, use relative paths (Vite proxy handles /api)
 // In production (Vercel), the API routes are at the same origin
@@ -205,6 +205,19 @@ export async function deleteChecklistItem(
 ): Promise<void> {
   await apiFetch<{ success: boolean }>(`/checklist/${id}`, {
     method: "DELETE",
+    token,
+  });
+}
+
+// ── AI Dictation API ─────────────────────────────────────────────
+
+export async function processDictation(
+  token: string,
+  transcription: string
+): Promise<{ tasks: DictatedTask[] }> {
+  return apiFetch<{ tasks: DictatedTask[] }>("/ai/process-dictation", {
+    method: "POST",
+    body: JSON.stringify({ transcription }),
     token,
   });
 }

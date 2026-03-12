@@ -1,50 +1,23 @@
-import { useState, useEffect } from "react";
-import { X, Pencil, MicOff, Mic, Calendar } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Calendar } from "lucide-react";
+import { useAuth } from "@clerk/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useTaskContext, formatDate } from "@/lib/task-context";
+import * as api from "@/lib/api";
+import type { DictatedTask } from "@/lib/types";
 
-type DictateState = "recording" | "processing" | "results";
-
-interface MockTask {
-  id: number;
-  title: string;
-  description: string;
-  checklist?: string[];
-  due_date?: string; // inferred from dictation
-  due_label?: string; // human-readable label shown in UI
-}
-
-const MOCK_TASKS: MockTask[] = [
-  {
-    id: 1,
-    title: "Review Q1 budget spreadsheet",
-    description: "Go through the quarterly budget with the finance team and flag any discrepancies before the board meeting.",
-    checklist: ["Download latest version from Drive", "Compare against last quarter", "Highlight overruns > 10%"],
-    due_date: "2026-03-13",
-    due_label: "Tomorrow",
-  },
-  {
-    id: 2,
-    title: "Send project update to stakeholders",
-    description: "Draft a concise email summarising the current sprint progress and upcoming milestones.",
-    due_date: "2026-03-13",
-    due_label: "Tomorrow",
-  },
-  {
-    id: 3,
-    title: "Schedule team retrospective",
-    description: "Find a time slot that works for everyone and book a conference room or video call link.",
-    checklist: ["Check calendar availability", "Send calendar invite", "Prepare discussion prompts"],
-    due_date: "2026-03-16",
-    due_label: "Next Monday",
-  },
-];
+type DictateState = "dictation" | "processing" | "results";
 
 interface AiDictateProps {
   onClose: () => void;
 }
 
 export function AiDictate({ onClose }: AiDictateProps) {
-  const [state, setState] = useState<DictateState>("recording");
+  const [state, setState] = useState<DictateState>("dictation");
+  const [dictation, setDictation] = useState("");
+  const [tasks, setTasks] = useState<DictatedTask[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -59,36 +32,73 @@ export function AiDictate({ onClose }: AiDictateProps) {
 
   return (
     <div className="rounded-[14px] border border-border bg-surface-raised shadow-md overflow-hidden animate-scale-in">
-      {state === "recording" && <RecordingState onClose={onClose} onDone={() => setState("processing")} />}
-      {state === "processing" && <ProcessingState onDone={() => setState("results")} />}
-      {state === "results" && <ResultsState onClose={onClose} />}
+      {state === "dictation" && (
+        <DictationState
+          dictation={dictation}
+          onDictationChange={setDictation}
+          onClose={onClose}
+          onDone={() => setState("processing")}
+        />
+      )}
+      {state === "processing" && (
+        <ProcessingState
+          dictation={dictation}
+          error={error}
+          onResult={(result) => {
+            setTasks(result);
+            setError(null);
+            setState("results");
+          }}
+          onError={(msg) => {
+            setError(msg);
+            setState("dictation");
+          }}
+        />
+      )}
+      {state === "results" && (
+        <ResultsState
+          tasks={tasks}
+          onRemoveTask={(idx) => setTasks((t) => t.filter((_, i) => i !== idx))}
+          onClose={onClose}
+        />
+      )}
     </div>
   );
 }
 
-/* ── State 2: Recording ─────────────────────────────────────── */
+/* ── State 1: Dictation (textarea) ─────────────────────────── */
 
-function RecordingState({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const [isRecording, setIsRecording] = useState(true);
+function DictationState({
+  dictation,
+  onDictationChange,
+  onClose,
+  onDone,
+}: {
+  dictation: string;
+  onDictationChange: (v: string) => void;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const canSubmit = dictation.trim().length > 0;
 
-  // Space to toggle pause/resume
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.code === "Space" && !(e.target instanceof HTMLButtonElement)) {
-        e.preventDefault();
-        setIsRecording((v) => !v);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    textareaRef.current?.focus();
   }, []);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSubmit) {
+      e.preventDefault();
+      onDone();
+    }
+  }
 
   return (
     <>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
         <span className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
-          Voice to Tasks
+          Dictate to Tasks
         </span>
         <button
           onClick={onClose}
@@ -99,38 +109,23 @@ function RecordingState({ onClose, onDone }: { onClose: () => void; onDone: () =
         </button>
       </div>
 
-      {/* Recording area */}
-      <div className="px-4 py-6 flex flex-col items-center gap-4">
-        {/* Waveform */}
-        <div className="flex items-center gap-1 h-10">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className={`w-1.5 rounded-full transition-colors duration-300 ${isRecording ? "bg-ember ai-wave-bar" : "bg-clay-light"}`}
-              style={isRecording ? { animationDelay: `${(i - 1) * 0.12}s`, height: "2rem" } : { height: "0.375rem" }}
-            />
-          ))}
+      {/* Textarea */}
+      <div className="px-4 py-4">
+        <textarea
+          ref={textareaRef}
+          value={dictation}
+          onChange={(e) => onDictationChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type or dictate your tasks here... e.g. 'Review the Q1 budget with finance, send an update email to stakeholders, and schedule a team retro for next week'"
+          className="w-full h-28 resize-none rounded-[8px] border border-border bg-bone/30 px-3 py-2.5 text-sm text-ink placeholder:text-clay leading-relaxed focus:outline-none focus:ring-1 focus:ring-ember/40 focus:border-ember/40"
+          maxLength={10000}
+        />
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-[11px] text-clay">
+            Use any dictation tool (Wispr, macOS Dictation, etc.) or just type
+          </p>
+          <span className="text-[10px] text-clay tabular-nums">{dictation.length.toLocaleString()}/10,000</span>
         </div>
-
-        {/* Status */}
-        <p className="text-sm italic text-clay">
-          {isRecording ? <>Listening&hellip;</> : "Paused"}
-        </p>
-
-        {/* Transcription preview */}
-        <p className="text-sm text-ink text-center w-full leading-relaxed">
-          &ldquo;Review the Q1 budget with finance, send an update email to stakeholders, and schedule a team retro for next week&hellip;&rdquo;
-        </p>
-
-        {/* Start over — only shown when paused */}
-        {!isRecording && (
-          <button
-            onClick={() => setIsRecording(true)}
-            className="text-xs text-clay hover:text-ink-muted transition-colors underline underline-offset-2"
-          >
-            Start over
-          </button>
-        )}
       </div>
 
       {/* Footer */}
@@ -145,87 +140,145 @@ function RecordingState({ onClose, onDone }: { onClose: () => void; onDone: () =
           </button>
         </div>
 
-        {/* Mic toggle button */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => setIsRecording((v) => !v)}
-            className={`relative h-12 w-12 rounded-full flex items-center justify-center text-white shadow-md transition-colors ${
-              isRecording ? "bg-ember hover:bg-ember-dark" : "bg-clay hover:bg-ink-muted"
-            }`}
-            aria-label={isRecording ? "Pause recording" : "Resume recording"}
+        <div className="flex items-center gap-2">
+          <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+            {navigator.platform.includes("Mac") ? "\u2318" : "Ctrl"} + {"\u21B5"}
+          </kbd>
+          <Button
+            variant="primary"
+            size="sm"
+            className="h-7 px-3 text-xs"
+            disabled={!canSubmit}
+            onClick={onDone}
           >
-            {isRecording && <span className="absolute inset-0 rounded-full bg-ember ai-pulse-ring" />}
-            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-          </button>
-          <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">Space</kbd>
+            Done
+          </Button>
         </div>
-
-        <button
-          onClick={onDone}
-          disabled={isRecording}
-          className={`text-xs border rounded-[8px] px-3 py-1.5 transition-colors ${
-            isRecording
-              ? "text-clay border-border opacity-50 cursor-not-allowed"
-              : "text-ink border-border hover:bg-bone"
-          }`}
-        >
-          Done
-        </button>
       </div>
     </>
   );
 }
 
-/* ── State 3: Processing ────────────────────────────────────── */
+/* ── State 2: Processing ───────────────────────────────────── */
 
-function ProcessingState({ onDone }: { onDone: () => void }) {
-  // Auto-advance after a short delay for mockup feel
-  // In a real impl this would be driven by the AI response
+function ProcessingState({
+  dictation,
+  error: previousError,
+  onResult,
+  onError,
+}: {
+  dictation: string;
+  error: string | null;
+  onResult: (tasks: DictatedTask[]) => void;
+  onError: (msg: string) => void;
+}) {
+  const { getToken } = useAuth();
+  const didRun = useRef(false);
+
+  useEffect(() => {
+    // Prevent StrictMode double-fire
+    if (didRun.current) return;
+    didRun.current = true;
+
+    async function process() {
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Not authenticated");
+        const { tasks } = await api.processDictation(token, dictation);
+        if (tasks.length === 0) {
+          onError("No tasks could be extracted from your dictation. Try being more specific.");
+        } else {
+          onResult(tasks);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Something went wrong";
+        onError(msg);
+      }
+    }
+
+    process();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <>
       <div className="px-4 py-3 border-b border-border-subtle">
         <span className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
-          Voice to Tasks
+          Dictate to Tasks
         </span>
       </div>
 
       <div className="px-4 py-10 flex flex-col items-center gap-4">
-        {/* Animated sparkle */}
         <div className="ai-sparkle-spin text-ember">
           <AiStarsIcon size={32} />
         </div>
 
         <p className="text-sm font-medium text-ink">Analysing your dictation&hellip;</p>
-        <p className="text-xs text-clay">Turning your words into tasks…</p>
+        <p className="text-xs text-clay">Turning your words into tasks&hellip;</p>
 
-        {/* Progress bar */}
         <div className="w-48 h-1.5 rounded-full bg-bone-dark overflow-hidden mt-2">
           <div className="h-full rounded-full bg-ember ai-progress-bar" />
         </div>
-      </div>
-
-      {/* Dev helper: click to advance */}
-      <div className="px-4 pb-4 flex justify-center">
-        <button
-          onClick={onDone}
-          className="text-[10px] text-clay hover:text-ink transition-colors border border-border rounded px-2 py-1"
-        >
-          [mockup] advance →
-        </button>
       </div>
     </>
   );
 }
 
-/* ── State 4: Results ───────────────────────────────────────── */
+/* ── State 3: Results ──────────────────────────────────────── */
 
-function ResultsState({ onClose }: { onClose: () => void }) {
+function ResultsState({
+  tasks,
+  onRemoveTask,
+  onClose,
+}: {
+  tasks: DictatedTask[];
+  onRemoveTask: (idx: number) => void;
+  onClose: () => void;
+}) {
+  const { getToken } = useAuth();
+  const { createTask, addChecklistItem } = useTaskContext();
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && tasks.length > 0) {
+        e.preventDefault();
+        handleAddAll();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [tasks.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleAddAll() {
+    // Fire-and-forget: createTask already does optimistic updates,
+    // so close immediately and let mutations settle in the background.
+    for (const task of tasks) {
+      createTask({
+        title: task.title,
+        description: task.description || undefined,
+        due_date: task.due_date ?? undefined,
+      }).then((created) => {
+        if (task.checklist?.length && created?.id) {
+          for (const item of task.checklist) {
+            addChecklistItem(created.id, item);
+          }
+        }
+      });
+    }
+
+    toast(`Added ${tasks.length} task${tasks.length === 1 ? "" : "s"} from dictation`);
+    onClose();
+  }
+
+  function dueLabel(dateStr?: string | null): string | null {
+    if (!dateStr) return null;
+    return formatDate(dateStr);
+  }
+
   return (
     <>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
         <span className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
-          {MOCK_TASKS.length} tasks from your dictation
+          {tasks.length} task{tasks.length === 1 ? "" : "s"} from your dictation
         </span>
         <button
           onClick={onClose}
@@ -238,41 +291,45 @@ function ResultsState({ onClose }: { onClose: () => void }) {
 
       {/* Scrollable task list */}
       <div className="px-3 py-3 space-y-2 max-h-72 overflow-y-auto">
-        {MOCK_TASKS.map((task) => (
-          <div key={task.id} className="relative bg-surface-raised rounded-[10px] border border-border p-3 pr-8">
-            {/* Edit button */}
-            <button
-              className="absolute top-2.5 right-2.5 h-6 w-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink hover:bg-bone transition-colors"
-              aria-label="Edit task"
-            >
-              <Pencil size={12} />
-            </button>
+        {tasks.map((task, idx) => {
+          const label = dueLabel(task.due_date);
+          return (
+            <div key={idx} className="relative bg-surface-raised rounded-[10px] border border-border p-3 pr-8">
+              {/* Remove button */}
+              <button
+                onClick={() => onRemoveTask(idx)}
+                className="absolute top-2.5 right-2.5 h-6 w-6 rounded-[6px] flex items-center justify-center text-clay hover:text-ink hover:bg-bone transition-colors"
+                aria-label="Remove task"
+              >
+                <X size={12} />
+              </button>
 
-            <p className="font-medium text-sm text-ink leading-snug">{task.title}</p>
+              <p className="font-medium text-sm text-ink leading-snug">{task.title}</p>
 
-            {task.due_label && (
-              <div className="flex items-center gap-1 mt-1.5">
-                <Calendar size={11} className="text-clay shrink-0" />
-                <span className="text-[11px] text-clay">{task.due_label}</span>
-              </div>
-            )}
+              {label && (
+                <div className="flex items-center gap-1 mt-1.5">
+                  <Calendar size={11} className="text-clay shrink-0" />
+                  <span className="text-[11px] text-clay">{label}</span>
+                </div>
+              )}
 
-            {task.description && (
-              <p className="text-xs text-ink-light mt-1.5 leading-relaxed line-clamp-2">{task.description}</p>
-            )}
+              {task.description && (
+                <p className="text-xs text-ink-light mt-1.5 leading-relaxed line-clamp-2">{task.description}</p>
+              )}
 
-            {task.checklist && task.checklist.length > 0 && (
-              <ul className="mt-2 space-y-0.5">
-                {task.checklist.map((item, idx) => (
-                  <li key={idx} className="text-[11px] text-clay flex items-start gap-1.5">
-                    <span className="mt-px shrink-0">□</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+              {task.checklist && task.checklist.length > 0 && (
+                <ul className="mt-2 space-y-0.5">
+                  {task.checklist.map((item, i) => (
+                    <li key={i} className="text-[11px] text-clay flex items-start gap-1.5">
+                      <span className="mt-px shrink-0">{"\u25A1"}</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Sticky footer */}
@@ -286,9 +343,20 @@ function ResultsState({ onClose }: { onClose: () => void }) {
             Cancel
           </button>
         </div>
-        <Button variant="primary" size="sm" className="h-7 px-3 text-xs">
-          Add All {MOCK_TASKS.length} Tasks
-        </Button>
+        <div className="flex items-center gap-2">
+          <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
+            {navigator.platform.includes("Mac") ? "\u2318" : "Ctrl"} + {"\u21B5"}
+          </kbd>
+          <Button
+            variant="primary"
+            size="sm"
+            className="h-7 px-3 text-xs"
+            disabled={tasks.length === 0}
+            onClick={handleAddAll}
+          >
+            {`Add All ${tasks.length} Task${tasks.length === 1 ? "" : "s"}`}
+          </Button>
+        </div>
       </div>
     </>
   );
@@ -306,13 +374,9 @@ export function AiStarsIcon({ size = 16, className = "" }: { size?: number; clas
       className={className}
       aria-hidden="true"
     >
-      {/* Large star top-right */}
       <path d="M11 1 L11.6 3.4 L14 4 L11.6 4.6 L11 7 L10.4 4.6 L8 4 L10.4 3.4 Z" />
-      {/* Large star bottom-left */}
       <path d="M4.5 8 L5 10 L7 10.5 L5 11 L4.5 13 L4 11 L2 10.5 L4 10 Z" />
-      {/* Small star top-left */}
       <path d="M3 1.5 L3.35 2.65 L4.5 3 L3.35 3.35 L3 4.5 L2.65 3.35 L1.5 3 L2.65 2.65 Z" />
-      {/* Small star bottom-right */}
       <path d="M13 10.5 L13.25 11.25 L14 11.5 L13.25 11.75 L13 12.5 L12.75 11.75 L12 11.5 L12.75 11.25 Z" />
     </svg>
   );

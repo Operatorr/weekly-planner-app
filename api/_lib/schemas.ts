@@ -67,6 +67,12 @@ export const setReminderSchema = z.object({
   reminder_at: z.string().datetime(),
 });
 
+// --- AI Dictation ---
+
+export const processDictationSchema = z.object({
+  transcription: z.string().min(1).max(10000),
+});
+
 // --- Filters ---
 
 const filterConfigSchema = z.object({
