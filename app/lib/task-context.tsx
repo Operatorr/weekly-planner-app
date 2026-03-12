@@ -277,7 +277,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       project_id?: string | null;
       is_someday?: boolean;
     }): Promise<Task> => {
-      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticId = `optimistic-${crypto.randomUUID()}`;
       return new Promise((resolve, reject) => {
         createMutation.mutate(
           { ...input, optimisticId },
@@ -542,7 +542,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const addChecklistItem = useCallback(
     (taskId: string, title: string) => {
       if (taskId.startsWith("optimistic-")) return;
-      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticId = `optimistic-${crypto.randomUUID()}`;
       addChecklistMutation.mutate({ taskId, title, optimisticId });
     },
     [addChecklistMutation]

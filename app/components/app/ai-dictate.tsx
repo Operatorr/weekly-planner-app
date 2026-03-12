@@ -247,25 +247,29 @@ function ResultsState({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tasks.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleAddAll() {
-    // Fire-and-forget: createTask already does optimistic updates,
-    // so close immediately and let mutations settle in the background.
+  async function handleAddAll() {
+    // Create tasks sequentially to avoid optimistic update race conditions.
+    // Close immediately for snappy UX — mutations settle in the background.
+    const count = tasks.length;
+    onClose();
+    toast(`Added ${count} task${count === 1 ? "" : "s"} from dictation`);
+
     for (const task of tasks) {
-      createTask({
-        title: task.title,
-        description: task.description || undefined,
-        due_date: task.due_date ?? undefined,
-      }).then((created) => {
+      try {
+        const created = await createTask({
+          title: task.title,
+          description: task.description || undefined,
+          due_date: task.due_date ?? undefined,
+        });
         if (task.checklist?.length && created?.id) {
           for (const item of task.checklist) {
             addChecklistItem(created.id, item);
           }
         }
-      });
+      } catch {
+        // Individual task failures are handled by the mutation's error/rollback logic
+      }
     }
-
-    toast(`Added ${tasks.length} task${tasks.length === 1 ? "" : "s"} from dictation`);
-    onClose();
   }
 
   function dueLabel(dateStr?: string | null): string | null {
