@@ -199,7 +199,7 @@ export function AddTask() {
             />
 
             {/* Option buttons */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <DatePicker
                 value={dueDate}
                 onChange={(date) => {
@@ -215,6 +215,7 @@ export function AddTask() {
                 projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color }))}
                 compact
               />
+              <div className="sm:hidden w-full" />
               <button
                 type="button"
                 onClick={() => {

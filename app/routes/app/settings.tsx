@@ -188,7 +188,7 @@ function ProBadge() {
 type SettingsSection = "form" | "defaults" | "display" | "behavior";
 
 const sections: { id: SettingsSection; label: string; icon: React.ReactNode }[] = [
-  { id: "form", label: "Task Form", icon: <FormInput size={15} /> },
+  { id: "form", label: "Form", icon: <FormInput size={15} /> },
   { id: "defaults", label: "Defaults", icon: <ChevronRight size={15} /> },
   { id: "display", label: "Display", icon: <Monitor size={15} /> },
   { id: "behavior", label: "Behavior", icon: <Zap size={15} /> },
