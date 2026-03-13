@@ -8,14 +8,24 @@ import {
   Zap,
   CalendarDays,
   LayoutList,
-  Bell,
+  Mic,
   ArrowRight,
+  ArrowDown,
+  ChevronRight,
   Sparkles,
   MoveRight,
 } from "lucide-react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap-config";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { DemoAppPreview } from "@/components/landing/demo-app-preview";
+
+function getNextDayOfWeek(dayIndex: number): string {
+  const today = new Date();
+  const diff = (dayIndex - today.getDay() + 7) % 7 || 7;
+  const target = new Date(today);
+  target.setDate(today.getDate() + diff);
+  return target.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -111,6 +121,56 @@ function LandingPage() {
       });
     });
 
+    // AI Dictate section scroll-triggered animations
+    const dictateTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".dictate-section",
+        start: "top 80%",
+        once: true,
+      },
+      defaults: { ease: "expo.out" },
+    });
+
+    dictateTl
+      .fromTo(".dictate-badge",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6 })
+      .fromTo(".dictate-headline",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8 }, "-=0.4")
+      .fromTo(".dictate-subheadline",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6 }, "-=0.4")
+      .fromTo(".dictate-bubble",
+        { opacity: 0, x: -40 },
+        { opacity: 1, x: 0, duration: 0.7 }, "-=0.3")
+      .fromTo(".dictate-arrow",
+        { opacity: 0, scale: 0.3 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, "-=0.3");
+
+    ScrollTrigger.batch(".dictate-task-card", {
+      onEnter: (elements) => {
+        gsap.fromTo(elements,
+          { opacity: 0, x: 40 },
+          { opacity: 1, x: 0, stagger: 0.15, duration: 0.7, ease: "expo.out" }
+        );
+      },
+      start: "top 85%",
+      once: true,
+    });
+
+    ScrollTrigger.create({
+      trigger: ".dictate-stats",
+      start: "top 90%",
+      onEnter: () => {
+        gsap.fromTo(".dictate-stats",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }
+        );
+      },
+      once: true,
+    });
+
     // CTA section glow pulse
     gsap.to(".cta-glow", {
       opacity: 0.25,
@@ -189,6 +249,118 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* ─── AI DICTATE SHOWCASE ─── */}
+      <section id="ai-dictate" className="dictate-section py-24 md:py-32 relative overflow-hidden">
+        {/* Dark background */}
+        <div className="absolute inset-0 bg-ink" />
+        <div className="absolute inset-0 grain opacity-30 pointer-events-none" />
+        {/* Ambient gradient blobs */}
+        <div className="absolute -top-[30%] -right-[15%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-ember/[0.08] to-amber/[0.06] blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-[25%] -left-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-sage/[0.06] to-sky/[0.04] blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-[1200px] mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-16 md:mb-20">
+            <div className="dictate-badge">
+              <Badge variant="coming" className="mb-6 py-1.5 px-4 text-[0.8125rem] border-ember/30 bg-ember/10 text-ember-light">
+                <Sparkles size={14} className="mr-1.5" />
+                AI-Powered
+              </Badge>
+            </div>
+            <h2 className="dictate-headline font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-chalk mb-4">
+              From voice to organized tasks
+              <br className="hidden sm:block" />
+              <span className="text-ember-light"> in seconds</span>
+            </h2>
+            <p className="dictate-subheadline text-lg text-chalk/50 max-w-[540px] mx-auto">
+              Speak naturally. Let AI break your stream of thoughts into structured tasks
+              with titles, dates, and checklists.
+            </p>
+          </div>
+
+          {/* Visual flow */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_1fr] gap-8 md:gap-4 items-center max-w-[960px] mx-auto">
+            {/* Left: Dictation bubble */}
+            <div className="dictate-bubble">
+              <div className="relative bg-chalk/[0.06] backdrop-blur-sm border border-chalk/10 rounded-2xl p-6">
+                {/* Mic + waveform header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-ember/20 flex items-center justify-center">
+                    <Mic size={18} className="text-ember-light" />
+                  </div>
+                  <div className="flex items-end gap-[3px] h-6">
+                    {[0.35, 0.6, 1, 0.7, 0.45, 0.8, 0.5, 0.9, 0.4, 0.65].map((h, i) => (
+                      <div
+                        key={i}
+                        className="w-[3px] rounded-full bg-ember-light/60"
+                        style={{ height: `${h * 100}%` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-auto text-xs text-chalk/30 font-mono">0:30</span>
+                </div>
+                {/* Dictation text */}
+                <p className="text-sm text-chalk/70 leading-relaxed">
+                  "I need to <span className="text-amber-light">buy groceries tomorrow</span>,
+                  also <span className="text-sky-light">schedule the dentist appointment for Friday</span>,
+                  oh and <span className="text-sage-light">finish the quarterly report by next Wednesday</span> — make sure to
+                  include the <span className="text-sage-light">revenue charts and team summary</span>,
+                  and <span className="text-ember-light">call Mom on Sunday</span>."
+                </p>
+              </div>
+            </div>
+
+            {/* Center: Arrow connector */}
+            <div className="dictate-arrow flex items-center justify-center">
+              {/* Mobile: down arrow */}
+              <div className="md:hidden flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-ember/20 flex items-center justify-center">
+                  <Sparkles size={16} className="text-ember-light" />
+                </div>
+                <ArrowDown size={20} className="text-chalk/30" />
+              </div>
+              {/* Desktop: right arrow */}
+              <div className="hidden md:flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-ember/20 flex items-center justify-center">
+                  <Sparkles size={16} className="text-ember-light" />
+                </div>
+                <ChevronRight size={20} className="text-chalk/30" />
+              </div>
+            </div>
+
+            {/* Right: Task cards */}
+            <div className="space-y-3">
+              <TaskMockCard
+                title="Buy groceries"
+                dueDate="Tomorrow"
+                dueColor="amber"
+              />
+              <TaskMockCard
+                title="Dentist appointment"
+                dueDate="Friday"
+                dueColor="sky"
+              />
+              <TaskMockCard
+                title="Finish quarterly report"
+                dueDate={getNextDayOfWeek(3)}
+                dueColor="sage"
+                checklist={["Revenue charts", "Team summary"]}
+              />
+              <TaskMockCard
+                title="Call Mom"
+                dueDate={getNextDayOfWeek(0)}
+                dueColor="ember"
+              />
+            </div>
+          </div>
+
+          {/* Stats line */}
+          <p className="dictate-stats text-center text-sm text-chalk/40 mt-12">
+            One 30-second dictation &rarr; 4 tasks, 2 checklists, 4 due dates
+          </p>
+        </div>
+      </section>
+
       {/* ─── FEATURES SECTION ─── */}
       <section id="features" className="py-24 md:py-32 bg-surface-sunken relative">
         <div className="absolute inset-0 grain opacity-20 pointer-events-none" />
@@ -207,7 +379,7 @@ function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeatureCard
               icon={<Zap size={22} />}
-              title="Smart Quick Add"
+              title="Quick Task Entry"
               description="Start typing and your task is captured. Add dates, reminders, and projects inline — or just hit Enter for rapid entry."
               color="ember"
               delay={1}
@@ -227,9 +399,9 @@ function LandingPage() {
               delay={3}
             />
             <FeatureCard
-              icon={<Bell size={22} />}
-              title="Never Forget"
-              description="Set one-time email reminders on any task. Get a gentle nudge when it matters, right in your inbox."
+              icon={<Mic size={22} />}
+              title="AI Dictate to Tasks"
+              description="Speak or type naturally and let AI turn your stream of thoughts into structured tasks — complete with titles, dates, and checklists."
               color="amber"
               delay={4}
             />
@@ -253,7 +425,7 @@ function LandingPage() {
             <StepCard
               number="01"
               title="Capture"
-              description="Type a task name and hit Enter. Add a date or reminder if you want — but you don't have to."
+              description="Quick-add a task with a keystroke, dictate a stream of thoughts and let AI break them into tasks, or type naturally with inline dates and reminders."
             />
             <StepCard
               number="02"
@@ -353,6 +525,50 @@ function StepCard({
       </div>
       <h3 className="text-xl font-semibold mb-2">{title}</h3>
       <p className="text-sm text-ink-muted leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+function TaskMockCard({
+  title,
+  dueDate,
+  dueColor,
+  checklist,
+}: {
+  title: string;
+  dueDate: string;
+  dueColor: string;
+  checklist?: string[];
+}) {
+  const colorMap: Record<string, string> = {
+    sky: "bg-sky/15 text-sky-light",
+    sage: "bg-sage/15 text-sage-light",
+    amber: "bg-amber/15 text-amber-light",
+    ember: "bg-ember/15 text-ember-light",
+  };
+
+  return (
+    <div className="dictate-task-card bg-chalk/[0.06] backdrop-blur-sm border border-chalk/10 rounded-xl px-4 py-3">
+      <div className="flex items-center gap-3">
+        {/* Checkbox */}
+        <div className="w-4 h-4 rounded-[4px] border-2 border-chalk/20 shrink-0" />
+        {/* Title */}
+        <span className="text-sm text-chalk/80 font-medium flex-1">{title}</span>
+        {/* Date badge */}
+        <span className={`text-[0.6875rem] px-2 py-0.5 rounded-full font-medium ${colorMap[dueColor]}`}>
+          {dueDate}
+        </span>
+      </div>
+      {checklist && (
+        <div className="mt-2 ml-7 space-y-1">
+          {checklist.map((item) => (
+            <div key={item} className="flex items-center gap-2 text-xs text-chalk/40">
+              <div className="w-3 h-3 rounded-[3px] border border-chalk/15 shrink-0" />
+              {item}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

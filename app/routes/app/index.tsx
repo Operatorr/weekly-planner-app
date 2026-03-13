@@ -583,7 +583,7 @@ function TaskManagement() {
                 </div>
 
                 {/* Section 4: Future Tasks */}
-                <FutureTasks tasks={section4Tasks} />
+                <FutureTasks tasks={section4Tasks} projects={projects} />
               </>
             )}
           </>

@@ -113,14 +113,11 @@ function PricingPage() {
 
               <ul className="space-y-3 flex-1">
                 <FeatureItem included>1 personal project</FeatureItem>
-                <FeatureItem included>Smart quick add</FeatureItem>
-                <FeatureItem included>One-time task reminders</FeatureItem>
+                <FeatureItem included>Quick task entry</FeatureItem>
                 <FeatureItem included>Flexible list layout</FeatureItem>
+                <FeatureItem included>Weekly view</FeatureItem>
+                <FeatureItem included>Upcoming &amp; Someday pages</FeatureItem>
                 <FeatureItem included>1 saved filter view</FeatureItem>
-                <FeatureItem included>1-week activity history</FeatureItem>
-                <FeatureItem included>
-                  Email &amp; calendar integrations
-                </FeatureItem>
               </ul>
             </Card>
 
@@ -178,7 +175,7 @@ function PricingPage() {
                 <FeatureItem included>150 saved filter views</FeatureItem>
                 <FeatureItem included>Unlimited activity history</FeatureItem>
                 <FeatureItem included>
-                  Task Assist AI
+                  AI Dictate to Tasks
                 </FeatureItem>
                 <FeatureItem included>Deadlines &amp; due dates</FeatureItem>
               </ul>
@@ -213,17 +210,22 @@ function PricingPage() {
                     pro="300"
                   />
                   <ComparisonRow
-                    feature="Smart quick add"
+                    feature="Quick task entry"
                     free={true}
                     pro={true}
                   />
                   <ComparisonRow
                     feature="Task reminders"
-                    free="One-time"
-                    pro="Custom"
+                    free={false}
+                    pro={true}
                   />
                   <ComparisonRow
                     feature="List layout"
+                    free={true}
+                    pro={true}
+                  />
+                  <ComparisonRow
+                    feature="Weekly view"
                     free={true}
                     pro={true}
                   />
@@ -249,16 +251,16 @@ function PricingPage() {
                   />
                   <ComparisonRow
                     feature="Activity history"
-                    free="1 week"
+                    free={false}
                     pro="Unlimited"
                   />
                   <ComparisonRow
                     feature="Email & calendar integration"
-                    free={true}
+                    free={false}
                     pro={true}
                   />
                   <ComparisonRow
-                    feature="Task Assist (AI)"
+                    feature="AI Dictate to Tasks"
                     free={false}
                     pro={true}
                   />

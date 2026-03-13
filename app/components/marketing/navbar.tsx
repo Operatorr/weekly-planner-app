@@ -20,11 +20,11 @@ export function Navbar() {
   const scrollToFeatures = () => {
     const isHomePage = window.location.pathname === "/";
     if (isHomePage) {
-      document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById("ai-dictate")?.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate({ to: "/" }).then(() => {
         setTimeout(() => {
-          document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+          document.getElementById("ai-dictate")?.scrollIntoView({ behavior: "smooth" });
         }, 100);
       });
     }
@@ -71,13 +71,18 @@ export function Navbar() {
           <button
             type="button"
             onClick={scrollToFeatures}
-            className="text-sm text-ink-muted hover:text-ink transition-colors"
+            className="text-sm text-ink-muted hover:text-ink transition-colors cursor-pointer"
           >
             Features
           </button>
           <Link
             to="/pricing"
             className="text-sm text-ink-muted hover:text-ink transition-colors"
+            onClick={() => {
+              if (window.location.pathname === "/pricing") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
           >
             Pricing
           </Link>
@@ -117,7 +122,7 @@ export function Navbar() {
           <div className="px-6 py-4 space-y-4">
             <button
               type="button"
-              className="block text-sm text-ink-muted hover:text-ink text-left"
+              className="block text-sm text-ink-muted hover:text-ink text-left cursor-pointer"
               onClick={() => {
                 setMobileOpen(false);
                 scrollToFeatures();
@@ -128,7 +133,12 @@ export function Navbar() {
             <Link
               to="/pricing"
               className="block text-sm text-ink-muted hover:text-ink"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                if (window.location.pathname === "/pricing") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
             >
               Pricing
             </Link>

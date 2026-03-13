@@ -539,6 +539,11 @@ button, a, [role="button"], input, textarea, select {
   will-change: opacity, transform;
 }
 
+/* Dictate task cards animation target */
+.dictate-task-card {
+  will-change: transform, opacity;
+}
+
 /* ─── Enhanced Reduced Motion for GSAP ─── */
 @media (prefers-reduced-motion: reduce) {
   /* Disable will-change hints to save memory */

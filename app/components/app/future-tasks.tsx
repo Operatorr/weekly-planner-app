@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Task } from "@/lib/types";
+import type { Task, Project } from "@/lib/types";
 import { useTaskContext } from "@/lib/task-context";
 import { TaskItem } from "@/components/app/task-item";
 import { TaskDetail } from "@/components/app/task-detail";
@@ -8,9 +8,10 @@ import { ChevronRight } from "lucide-react";
 
 interface FutureTasksProps {
   tasks: Task[];
+  projects?: Project[];
 }
 
-export function FutureTasks({ tasks }: FutureTasksProps) {
+export function FutureTasks({ tasks, projects = [] }: FutureTasksProps) {
   const { completeTask, uncompleteTask, deleteTask, tasks: allTasks } = useTaskContext();
   const [expanded, setExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -99,6 +100,8 @@ export function FutureTasks({ tasks }: FutureTasksProps) {
                       onToggle={handleToggle}
                       onClick={setSelectedTask}
                       onDelete={deleteTask}
+                      showProject
+                      project={projects.find((p) => p.id === task.project_id)}
                     />
                   ))}
                 </div>

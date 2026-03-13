@@ -1,4 +1,4 @@
-import { Outlet, createRootRoute, Link } from "@tanstack/react-router";
+import { Outlet, ScrollRestoration, createRootRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { ClerkProvider, useAuth } from "@clerk/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,6 +32,7 @@ function RootComponent() {
         <AuthCacheCleaner />
         <ErrorBoundary>
           <OfflineBanner />
+          <ScrollRestoration />
           <Outlet />
         </ErrorBoundary>
         <Toaster
