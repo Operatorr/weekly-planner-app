@@ -57,7 +57,7 @@ export function FutureTasks({ tasks, projects = [] }: FutureTasksProps) {
       <div className="flex items-center justify-between px-5 mb-2">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 group"
+          className="flex items-center gap-2 group cursor-pointer"
         >
           <ChevronRight
             size={14}

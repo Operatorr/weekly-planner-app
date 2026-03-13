@@ -18,6 +18,7 @@ import {
   Trash2,
   Plus,
   Check,
+  CheckCircle2,
   GripVertical,
 } from "lucide-react";
 
@@ -30,6 +31,8 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
   const {
     updateTask,
     deleteTask,
+    completeTask,
+    uncompleteTask,
     addChecklistItem,
     toggleChecklistItem,
     deleteChecklistItem,
@@ -118,6 +121,18 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
         onClose();
         return;
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (settings.soundOnComplete) {
+          playTaskCompleteSound();
+        }
+        if (task.status === "completed") {
+          uncompleteTask(task.id);
+        } else {
+          completeTask(task.id);
+        }
+        return;
+      }
       if (e.key === "Tab" && sheetRef.current) {
         const focusable = sheetRef.current.querySelectorAll<HTMLElement>(
           'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
@@ -136,7 +151,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, task.id, task.status, completeTask, uncompleteTask, settings.soundOnComplete]);
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -336,36 +351,71 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border-subtle flex items-center justify-between">
-          {confirmDelete ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-red-600">Delete this task?</span>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="gap-1.5"
-                onClick={handleDelete}
-              >
-                Confirm
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setConfirmDelete(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 size={14} />
-              Delete
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {confirmDelete ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600">Delete this task?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={handleDelete}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <>
+                {task.status === "completed" ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      if (settings.soundOnComplete) {
+                        playTaskCompleteSound();
+                      }
+                      uncompleteTask(task.id);
+                    }}
+                  >
+                    <CheckCircle2 size={14} />
+                    Uncomplete
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      if (settings.soundOnComplete) {
+                        playTaskCompleteSound();
+                      }
+                      completeTask(task.id);
+                    }}
+                  >
+                    <CheckCircle2 size={14} />
+                    Complete
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </Button>
+              </>
+            )}
+          </div>
 
           <span className="text-xs text-clay">
             Created{" "}

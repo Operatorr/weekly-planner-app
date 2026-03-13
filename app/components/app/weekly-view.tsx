@@ -50,7 +50,7 @@ function DraggableWeekTask({
       {...listeners}
       onClick={() => onClick(task)}
       className={cn(
-        "task-item w-full text-left px-2 py-1.5 rounded-[8px] text-xs text-ink-light truncate transition-colors",
+        "task-item w-full text-left px-2 py-1.5 rounded-[8px] text-xs text-ink-light truncate transition-colors cursor-pointer",
         "hover:bg-bone/60",
         isDragging && "bg-surface-raised"
       )}

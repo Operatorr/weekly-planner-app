@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import type { Task, Project } from "@/lib/types";
-import { isPast } from "@/lib/task-context";
 import { useTaskContext } from "@/lib/task-context";
 import { useSettings } from "@/lib/settings-context";
 import { TaskItem } from "@/components/app/task-item";
@@ -34,7 +33,7 @@ export function TaskList({
   showProject = false,
   alwaysShowCompleted = false,
 }: TaskListProps) {
-  const { completeTask, uncompleteTask, deleteTask, updateTask } = useTaskContext();
+  const { completeTask, uncompleteTask, deleteTask, updateTask, reorderTasks } = useTaskContext();
   const { settings } = useSettings();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -68,14 +67,7 @@ export function TaskList({
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const completedTasks = tasks.filter((t) => t.status === "completed");
 
-  // Sort: overdue first, then today, then undated
-  const sortedTasks = [...activeTasks].sort((a, b) => {
-    if (a.due_date && b.due_date) {
-      if (isPast(a.due_date) && !isPast(b.due_date)) return -1;
-      if (!isPast(a.due_date) && isPast(b.due_date)) return 1;
-    }
-    return a.sort_order - b.sort_order;
-  });
+  const sortedTasks = [...activeTasks].sort((a, b) => a.sort_order - b.sort_order);
 
   const taskIds = sortedTasks.map((t) => t.id);
 
@@ -86,6 +78,20 @@ export function TaskList({
     } else {
       completeTask(id);
     }
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index <= 0) return;
+    const task = sortedTasks[index];
+    const neighbor = sortedTasks[index - 1];
+    reorderTasks([task.id, neighbor.id], [neighbor.sort_order, task.sort_order]);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index >= sortedTasks.length - 1) return;
+    const task = sortedTasks[index];
+    const neighbor = sortedTasks[index + 1];
+    reorderTasks([task.id, neighbor.id], [neighbor.sort_order, task.sort_order]);
   };
 
   // Sync selectedTask with latest data
@@ -159,6 +165,10 @@ export function TaskList({
                     insertPosition={insertPosition}
                     showProject={showProject}
                     project={projects.find((p) => p.id === task.project_id)}
+                    onMoveUp={() => handleMoveUp(index)}
+                    onMoveDown={() => handleMoveDown(index)}
+                    isFirst={index === 0}
+                    isLast={index === sortedTasks.length - 1}
                   />
                 </div>
               );

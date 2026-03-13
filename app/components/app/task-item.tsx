@@ -23,6 +23,8 @@ import {
   Archive,
   Sun,
   ListChecks,
+  MoveUp,
+  MoveDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
@@ -44,6 +46,10 @@ interface TaskItemProps {
   compact?: boolean;
   sortable?: boolean;
   insertPosition?: "before" | "after" | null;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
 export function TaskItem({
@@ -57,6 +63,10 @@ export function TaskItem({
   compact,
   sortable = false,
   insertPosition,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }: TaskItemProps) {
   const { settings } = useSettings();
   const { getToken } = useAuth();
@@ -203,9 +213,9 @@ export function TaskItem({
           {...attributes}
           {...listeners}
           className={cn(
-            "self-center -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
+            "hidden md:flex self-center -ml-2 transition-opacity duration-150 cursor-grab active:cursor-grabbing",
             task.status !== "completed"
-              ? "opacity-50 md:opacity-0 md:group-hover:opacity-50"
+              ? "md:opacity-0 md:group-hover:opacity-50"
               : "opacity-0"
           )}
           onClick={(e) => e.stopPropagation()}
@@ -393,6 +403,27 @@ export function TaskItem({
             >
               <Check size={14} className="text-clay" />
               <span>{task.status === "completed" ? "Uncomplete" : "Complete"}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={isFirst}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp?.();
+              }}
+            >
+              <MoveUp size={14} className="text-clay" />
+              <span>Move Up</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isLast}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown?.();
+              }}
+            >
+              <MoveDown size={14} className="text-clay" />
+              <span>Move Down</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {/* Schedule options */}
