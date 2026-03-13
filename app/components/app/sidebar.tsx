@@ -56,7 +56,7 @@ const bottomNavItems: NavItem[] = [
   { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
-function SidebarContent({ collapsed }: { collapsed: boolean }) {
+function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { activeView, setActiveView, activeProject, setActiveProject, savedFilters, setFilterPanelOpen, activeFilter, setActiveFilter } = useAppContext();
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const createProject = useCreateProject();
@@ -166,6 +166,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
               setActiveView(item.id as ViewType);
               setActiveProject("all");
               navigate({ to: "/app" });
+              onNavigate?.();
             }}
           />
         ))}
@@ -252,6 +253,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     setActiveProject(project.id);
                     setActiveView("inbox");
                     navigate({ to: "/app" });
+                    onNavigate?.();
                   }}
                   className={cn(
                     "flex items-center cursor-pointer",
@@ -417,6 +419,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   setActiveProject("all");
                   navigate({ to: "/app" });
                 }
+                onNavigate?.();
               }}
               className={cn(
                 "w-full flex items-center gap-2.5 rounded-[8px] transition-colors cursor-pointer",
@@ -477,6 +480,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
               } else {
                 navigate({ to: "/app" });
               }
+              onNavigate?.();
             }}
           />
         ))}
@@ -522,7 +526,7 @@ export function AppSidebar() {
               DoMarrow
             </span>
           </div>
-          <SidebarContent collapsed={false} />
+          <SidebarContent collapsed={false} onNavigate={() => setMobileSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
     </TooltipProvider>

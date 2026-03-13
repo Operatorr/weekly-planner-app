@@ -4,7 +4,8 @@ import { getWeekDays, getWeekRange, normalizeDate, isPast, isToday } from "@/lib
 import { useTaskContext } from "@/lib/task-context";
 import { TaskDetail } from "@/components/app/task-detail";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { DayExpandPanel } from "@/components/app/day-expand-panel";
 import { useSettings } from "@/lib/settings-context";
 import { useDroppable } from "@dnd-kit/core";
 import {
@@ -69,10 +70,12 @@ function DayColumn({
   day,
   tasks,
   onTaskClick,
+  onExpand,
 }: {
   day: { label: string; date: string; isToday: boolean };
   tasks: Task[];
   onTaskClick: (task: Task) => void;
+  onExpand: () => void;
 }) {
   const droppableId = `week-${day.date}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
@@ -82,7 +85,7 @@ function DayColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-[12px] border min-h-[180px] transition-all duration-200",
+        "group rounded-[12px] border min-h-[180px] transition-all duration-200",
         day.isToday
           ? "border-ember/20 bg-ember/[0.02]"
           : "border-border-subtle bg-surface-raised/50 hover:border-border",
@@ -91,9 +94,10 @@ function DayColumn({
       )}
     >
       {/* Day header */}
-      <div
+      <button
+        onClick={onExpand}
         className={cn(
-          "px-2.5 py-2 flex flex-col items-center text-center border-b",
+          "w-full px-2.5 py-2 flex items-center justify-center text-center border-b cursor-pointer relative",
           day.isToday ? "border-ember/10" : "border-border-subtle/60"
         )}
       >
@@ -105,10 +109,11 @@ function DayColumn({
         >
           {day.label}
         </span>
-        {/* {day.isToday && (
-          <div className="w-1.5 h-1.5 rounded-full bg-ember mx-auto mt-1" />
-        )} */}
-      </div>
+        <Maximize2
+          size={11}
+          className="absolute right-2 text-clay opacity-0 group-hover:opacity-60 transition-opacity"
+        />
+      </button>
 
       {/* Day tasks */}
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
@@ -129,6 +134,7 @@ function DayColumn({
 export function WeeklyView({ tasks }: WeeklyViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [expandedDay, setExpandedDay] = useState<{ label: string; date: string } | null>(null);
   const { tasks: allTasks } = useTaskContext();
   const { settings } = useSettings();
   const weekDays = getWeekDays(weekOffset, settings.weekStartsOn);
@@ -208,8 +214,7 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
               (t) =>
                 t.due_date &&
                 normalizeDate(t.due_date) === day.date &&
-                t.status !== "completed" &&
-                !(weekOffset === 0 && isToday(t.due_date))
+                t.status !== "completed"
             );
 
             return (
@@ -218,11 +223,23 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
                 day={day}
                 tasks={dayTasks}
                 onTaskClick={setSelectedTask}
+                onExpand={() => setExpandedDay({ label: day.label, date: day.date })}
               />
             );
           })}
         </div>
       </div>
+
+      {/* Day expand panel */}
+      {expandedDay && (
+        <DayExpandPanel
+          day={expandedDay}
+          tasks={allTasks.filter(
+            (t) => t.due_date && normalizeDate(t.due_date) === expandedDay.date
+          )}
+          onClose={() => setExpandedDay(null)}
+        />
+      )}
 
       {/* Task detail sheet */}
       {currentSelectedTask && (
