@@ -150,7 +150,7 @@ export function AddTask() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
     }
@@ -210,12 +210,7 @@ export function AddTask() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setExpanded(false);
-                  resetForm(false, false);
-                }
-              }}
+              onKeyDown={handleKeyDown}
               placeholder="Description (optional)"
               aria-label="Task description"
               name="task-description"
@@ -279,7 +274,7 @@ export function AddTask() {
             </div>
             <div className="flex items-center gap-2">
               <kbd className="text-[10px] text-clay bg-bone border border-border-subtle rounded px-1.5 py-0.5 font-mono">
-                ↵
+                ⌘ + ↵
               </kbd>
               <Button
                 variant="primary"
