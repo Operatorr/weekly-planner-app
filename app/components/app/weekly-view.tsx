@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { DayExpandPanel } from "@/components/app/day-expand-panel";
 import { useSettings } from "@/lib/settings-context";
+import { useBackButtonClose } from "@/hooks/use-back-button-close";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -137,6 +138,10 @@ export function WeeklyView({ tasks }: WeeklyViewProps) {
   const [expandedDay, setExpandedDay] = useState<{ label: string; date: string } | null>(null);
   const { tasks: allTasks } = useTaskContext();
   const { settings } = useSettings();
+
+  // On mobile, intercept the Android back button to close panels instead of navigating away
+  useBackButtonClose("day-expand", !!expandedDay, () => setExpandedDay(null));
+  useBackButtonClose("task-detail-weekly", !!selectedTask, () => setSelectedTask(null));
   const weekDays = getWeekDays(weekOffset, settings.weekStartsOn);
   const weekRange = getWeekRange(weekOffset, settings.weekStartsOn);
 
