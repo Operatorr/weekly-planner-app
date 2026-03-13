@@ -50,13 +50,13 @@ export function AddTask() {
     if (expanded) {
       inputRef.current?.focus();
       // Set project: use active project if viewing one, otherwise fall back to settings default
-      if (projectId === null) {
-        const contextProject = getDefaultProject();
-        if (contextProject) {
-          setProjectId(contextProject);
-        } else if (settings.defaultProject !== "none") {
-          setProjectId(settings.defaultProject);
-        }
+      const contextProject = getDefaultProject();
+      if (contextProject) {
+        setProjectId(contextProject);
+      } else if (settings.defaultProject !== "none") {
+        setProjectId(settings.defaultProject);
+      } else {
+        setProjectId(null);
       }
       // Set due date from settings if not already set
       if (dueDate === null) {

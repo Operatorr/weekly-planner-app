@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useTaskContext, formatDate } from "@/lib/task-context";
+import { useAppContext } from "@/lib/app-context";
 import * as api from "@/lib/api";
 import type { DictatedTask } from "@/lib/types";
 
@@ -236,6 +237,7 @@ function ResultsState({
 }) {
   const { getToken } = useAuth();
   const { createTask, addChecklistItem } = useTaskContext();
+  const { activeProject } = useAppContext();
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && tasks.length > 0) {
@@ -260,6 +262,7 @@ function ResultsState({
           title: task.title,
           description: task.description || undefined,
           due_date: task.due_date ?? undefined,
+          project_id: activeProject !== "all" ? activeProject : null,
         });
         if (task.checklist?.length && created?.id) {
           for (const item of task.checklist) {
