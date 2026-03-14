@@ -12,6 +12,7 @@ import { FilterPanel, type FilterConfig } from "@/components/app/filter-panel";
 import type { Task } from "@/lib/types";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useProvisionUser } from "@/hooks/use-provision-user";
+import { useBackButtonClose } from "@/hooks/use-back-button-close";
 import { TaskProvider } from "@/lib/task-context";
 import { ProjectProvider } from "@/lib/project-context";
 import { SettingsProvider, useSettings } from "@/lib/settings-context";
@@ -116,6 +117,12 @@ function AppLayoutInner() {
 
   // Provision user on first sign-in
   useProvisionUser();
+
+  // On mobile, intercept the Android back button to close panels instead of navigating away
+  useBackButtonClose("mobile-sidebar", mobileSidebarOpen, () => setMobileSidebarOpen(false));
+  useBackButtonClose("quick-find", quickFindOpen, () => setQuickFindOpen(false));
+  useBackButtonClose("quick-find-task", !!quickFindTask, () => setQuickFindTask(null));
+  useBackButtonClose("filter-panel", filterPanelOpen, () => setFilterPanelOpen(false));
 
   const toggleSidebar = useCallback(() => {
     if (window.innerWidth < 768) {
