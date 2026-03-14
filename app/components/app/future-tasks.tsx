@@ -3,6 +3,7 @@ import type { Task, Project } from "@/lib/types";
 import { useTaskContext } from "@/lib/task-context";
 import { TaskItem } from "@/components/app/task-item";
 import { TaskDetail } from "@/components/app/task-detail";
+import { useBackButtonClose } from "@/hooks/use-back-button-close";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 
@@ -15,6 +16,9 @@ export function FutureTasks({ tasks, projects = [] }: FutureTasksProps) {
   const { completeTask, uncompleteTask, deleteTask, tasks: allTasks } = useTaskContext();
   const [expanded, setExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // On mobile, intercept the Android back button to close task detail instead of navigating away
+  useBackButtonClose("task-detail-future", !!selectedTask, () => setSelectedTask(null));
 
   const activeTasks = tasks.filter((t) => t.status !== "completed");
 

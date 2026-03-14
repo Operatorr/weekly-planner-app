@@ -4,6 +4,7 @@ import { useTaskContext } from "@/lib/task-context";
 import { useSettings } from "@/lib/settings-context";
 import { TaskItem } from "@/components/app/task-item";
 import { TaskDetail } from "@/components/app/task-detail";
+import { useBackButtonClose } from "@/hooks/use-back-button-close";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
 import {
@@ -42,6 +43,9 @@ export function TaskList({
   const listRef = useRef<HTMLDivElement>(null);
 
   const { setNodeRef, isOver } = useDroppable({ id: "tasklist-drop" });
+
+  // On mobile, intercept the Android back button to close task detail instead of navigating away
+  useBackButtonClose("task-detail-list", !!selectedTask, () => setSelectedTask(null));
 
   // Detect newly added tasks for slide-in animation
   // Only animate if exactly ONE new task was added (not a view/filter change)
