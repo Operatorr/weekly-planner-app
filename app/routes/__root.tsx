@@ -4,6 +4,8 @@ import { ClerkProvider, useAuth } from "@clerk/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { OfflineBanner } from "@/components/offline-banner";
+import { CacheHydrator } from "@/components/cache-hydrator";
+import { clearPersistedCache } from "@/lib/query-cache-persist";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Toaster } from "sonner";
@@ -30,6 +32,7 @@ function RootComponent() {
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <QueryClientProvider client={queryClient}>
         <AuthCacheCleaner />
+        <CacheHydrator />
         <ErrorBoundary>
           <OfflineBanner />
           <ScrollRestoration />
@@ -55,19 +58,25 @@ function RootComponent() {
   );
 }
 
-/** Clears TanStack Query cache when user signs out. */
+/** Clears TanStack Query cache and IndexedDB cache when user signs out. */
 function AuthCacheCleaner() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
   const wasSignedIn = useRef(false);
+  const lastUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (isSignedIn) {
+    if (isSignedIn && userId) {
       wasSignedIn.current = true;
+      lastUserId.current = userId;
     } else if (wasSignedIn.current) {
       queryClient.clear();
+      if (lastUserId.current) {
+        clearPersistedCache(lastUserId.current);
+      }
       wasSignedIn.current = false;
+      lastUserId.current = null;
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, userId]);
 
   return null;
 }
